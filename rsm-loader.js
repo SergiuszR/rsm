@@ -1,215 +1,89 @@
 /**
- * RSM Script Loader for Webflow + Netlify
- * Main loader script to be included globally in Webflow
+ * Simple RSM Script Loader
+ * One global loader that handles everything
  */
 
 (function() {
     'use strict';
     
-    // Prevent multiple initialization
-    if (window.RSM) {
-        console.log('[RSM Loader] Already initialized');
-        return;
-    }
-    
-    // Configuration
-    const RSM_CONFIG = {
-        baseURL: 'https://rsm-project.netlify.app', // Update this with your actual Netlify URL
-        globalScripts: [
-            'js/global/footer.js',
-            'js/global/lenis.js'
-        ],
-        pageScripts: {
-            homepage: [
-                'js/homepage/cards.js',
-                'js/homepage/testimonials.js'
-            ]
-        },
-        loadedScripts: new Set(),
-        debug: true, // Set to true for console logging
-        initialized: false
-    };
-
-    // Utility functions
-    function log(...args) {
-        if (RSM_CONFIG.debug) {
-            console.log('[RSM Loader]', ...args);
-        }
-    }
-
-    function error(...args) {
-        console.error('[RSM Loader]', ...args);
-    }
-
-    // Script loading function with error isolation
-    function loadScript(src, callback) {
-        if (RSM_CONFIG.loadedScripts.has(src)) {
-            log(`Script already loaded: ${src}`);
-            if (callback) callback();
-            return;
-        }
-
-        const script = document.createElement('script');
-        script.src = `${RSM_CONFIG.baseURL}/${src}`;
-        script.defer = true;
+    const RSM = {
+        baseURL: 'https://rsm-project.netlify.app',
+        loaded: new Set(),
         
-        // Add error isolation wrapper
-        script.onload = function() {
-            try {
-                RSM_CONFIG.loadedScripts.add(src);
-                log(`Successfully loaded: ${src}`);
+        // Load a single script
+        loadScript: function(src, callback) {
+            if (this.loaded.has(src)) {
                 if (callback) callback();
-            } catch (e) {
-                error(`Error in script ${src}:`, e);
-                if (callback) callback(e);
-            }
-        };
-        
-        script.onerror = function() {
-            error(`Failed to load: ${src}`);
-            if (callback) callback(new Error(`Failed to load ${src}`));
-        };
-        
-        // Add global error handler for this script
-        script.addEventListener('error', function(e) {
-            error(`Script execution error in ${src}:`, e);
-        });
-        
-        document.head.appendChild(script);
-        log(`Loading script: ${src}`);
-    }
-
-    // Load multiple scripts with callback when all are done
-    function loadScripts(scriptPaths, callback) {
-        if (!scriptPaths || scriptPaths.length === 0) {
-            if (callback) callback();
-            return;
-        }
-
-        let loadedCount = 0;
-        let hasError = false;
-        const totalScripts = scriptPaths.length;
-
-        function onScriptLoad(error) {
-            loadedCount++;
-            if (error && !hasError) {
-                hasError = true;
-                if (callback) callback(error);
                 return;
             }
             
-            if (loadedCount === totalScripts && !hasError) {
-                log(`All scripts loaded successfully (${totalScripts} scripts)`);
+            const script = document.createElement('script');
+            script.src = `${this.baseURL}/${src}`;
+            script.defer = true;
+            
+            script.onload = () => {
+                this.loaded.add(src);
                 if (callback) callback();
-            }
-        }
-
-        scriptPaths.forEach(scriptPath => {
-            loadScript(scriptPath, onScriptLoad);
-        });
-    }
-
-    // Main initialization function
-    function initRSM() {
-        if (RSM_CONFIG.initialized) {
-            log('Already initialized');
-            return;
-        }
+            };
+            
+            script.onerror = () => {
+                if (callback) callback(new Error(`Failed to load ${src}`));
+            };
+            
+            document.head.appendChild(script);
+        },
         
-        RSM_CONFIG.initialized = true;
-        log('Initializing RSM Script Loader');
-        
-        // Load global scripts first
-        loadScripts(RSM_CONFIG.globalScripts, function(error) {
-            if (error) {
-                error('Failed to load global scripts:', error);
+        // Load multiple scripts
+        loadScripts: function(scripts, callback) {
+            if (!scripts || scripts.length === 0) {
+                if (callback) callback();
                 return;
             }
-            log('Global scripts loaded successfully');
-        });
-    }
-
-    // Public API - Define immediately to avoid timing issues
-    window.RSM = {
-        // Load page-specific scripts
-        appendScriptToPage: function(pageName, callback) {
-            if (!pageName) {
-                error('Page name is required');
-                if (callback) callback(new Error('Page name is required'));
-                return;
-            }
-
-            const scripts = RSM_CONFIG.pageScripts[pageName];
-            if (!scripts) {
-                error(`No scripts found for page: ${pageName}`);
-                if (callback) callback(new Error(`No scripts found for page: ${pageName}`));
-                return;
-            }
-
-            log(`Loading scripts for page: ${pageName}`);
-            loadScripts(scripts, function(error) {
-                if (error) {
-                    error(`Failed to load scripts for page ${pageName}:`, error);
-                } else {
-                    log(`Successfully loaded all scripts for page: ${pageName}`);
-                }
-                if (callback) callback(error);
+            
+            let loaded = 0;
+            let hasError = false;
+            
+            scripts.forEach(script => {
+                this.loadScript(script, (error) => {
+                    loaded++;
+                    if (error && !hasError) {
+                        hasError = true;
+                        if (callback) callback(error);
+                        return;
+                    }
+                    if (loaded === scripts.length && !hasError) {
+                        if (callback) callback();
+                    }
+                });
             });
         },
-
-        // Load custom script
-        loadCustomScript: function(scriptPath, callback) {
-            loadScript(scriptPath, callback);
-        },
-
-        // Configure the loader
-        configure: function(options) {
-            if (options.baseURL) RSM_CONFIG.baseURL = options.baseURL;
-            if (options.debug !== undefined) RSM_CONFIG.debug = options.debug;
-            if (options.pageScripts) {
-                Object.assign(RSM_CONFIG.pageScripts, options.pageScripts);
+        
+        // Load page-specific scripts
+        appendScriptToPage: function(pageName, callback) {
+            const scripts = {
+                homepage: [
+                    'js/homepage/cards.js',
+                    'js/homepage/testimonials.js'
+                ]
+            };
+            
+            const pageScripts = scripts[pageName];
+            if (!pageScripts) {
+                if (callback) callback(new Error(`No scripts for page: ${pageName}`));
+                return;
             }
-            log('Configuration updated:', options);
-        },
-
-        // Get current configuration
-        getConfig: function() {
-            return { ...RSM_CONFIG };
-        },
-
-        // Check if script is loaded
-        isScriptLoaded: function(scriptPath) {
-            return RSM_CONFIG.loadedScripts.has(scriptPath);
-        },
-
-        // Force initialization (useful for debugging)
-        init: function() {
-            initRSM();
-        },
-
-        // Get loading status
-        isReady: function() {
-            return RSM_CONFIG.initialized;
+            
+            this.loadScripts(pageScripts, callback);
         }
     };
-
-    // Initialize immediately - RSM object is now available
-    log('RSM Script Loader object created');
-
-    // Add global error handler to catch any unhandled errors
-    window.addEventListener('error', function(e) {
-        if (e.filename && e.filename.includes('rsm-project.netlify.app')) {
-            error('RSM Script Error:', e.message, 'at', e.filename, 'line', e.lineno);
-        }
-    });
-
-    // Initialize when DOM is ready
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initRSM);
-    } else {
-        // DOM already loaded, initialize immediately
-        setTimeout(initRSM, 0);
-    }
-
-    log('RSM Script Loader setup complete');
+    
+    // Make RSM globally available
+    window.RSM = RSM;
+    
+    // Auto-load global scripts
+    RSM.loadScripts([
+        'js/global/footer.js',
+        'js/global/lenis.js'
+    ]);
+    
 })();

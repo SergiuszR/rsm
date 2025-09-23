@@ -1,14 +1,5 @@
-// Webflow-compatible initialization
-window.Webflow = window.Webflow || [];
-window.Webflow.push(function() {
-  console.log('[Testimonials Script] Webflow ready - Initializing...');
-  
-  // Wait a bit for Webflow to finish its DOM manipulation
-  setTimeout(function() {
-    if (typeof $ === 'undefined' || typeof gsap === 'undefined') {
-      console.error('[Testimonials Script] Required libraries not found (jQuery or GSAP)');
-      return;
-    }
+$(document).ready(function() {
+  if (typeof $ === 'undefined' || typeof gsap === 'undefined') return;
   
   const $wrapper = $('.testimonials_list-wrapper');
   const $cards = $wrapper.find('.testimonials_item');
@@ -16,25 +7,8 @@ window.Webflow.push(function() {
   const $prevBtn = $('[data-slider-previous]');
   const $nextBtn = $('[data-slider-next]');
   const $counter = $controlsWrapper.find('.text-weight-bold');
-  
-  console.log('[Testimonials Script] Wrapper found:', $wrapper.length);
-  console.log('[Testimonials Script] Cards found:', $cards.length);
-  console.log('[Testimonials Script] Controls found:', $controlsWrapper.length);
 
-  if ($wrapper.length === 0) {
-    console.log('[Testimonials Script] No testimonials wrapper found (.testimonials_list-wrapper). Skipping initialization.');
-    return;
-  }
-
-  if ($cards.length === 0) {
-    console.log('[Testimonials Script] No testimonial cards found (.testimonials_item). Skipping initialization.');
-    return;
-  }
-
-  if ($controlsWrapper.length === 0) {
-    console.log('[Testimonials Script] No controls wrapper found (.slider_controls-wrapper). Skipping initialization.');
-    return;
-  }
+  if ($wrapper.length === 0 || $cards.length === 0 || $controlsWrapper.length === 0) return;
   
   let isAnimating = false;
   let activeCardOrder = "4";
@@ -341,7 +315,4 @@ window.Webflow.push(function() {
             scrub: 0.5
         }
     });
-    
-    console.log('[Testimonials Script] Initialization complete');
-  }, 100); // Small delay to let Webflow finish
 });

@@ -1,32 +1,14 @@
-// Webflow-compatible initialization
-window.Webflow = window.Webflow || [];
-window.Webflow.push(function() {
-	console.log('[Footer Script] Webflow ready - Initializing...');
+$(document).ready(function () {
+	const footerWrapper = $('.footer_text-wrapper');
+	const footerTexts = $('.footer-text-name');
 	
-	// Wait a bit for Webflow to finish its DOM manipulation
-	setTimeout(function() {
-		const footerWrapper = $('.footer_text-wrapper');
-		const footerTexts = $('.footer-text-name');
-		
-		// Check if required elements exist
-		if (footerWrapper.length === 0) {
-			console.log('[Footer Script] Footer wrapper (.footer_text-wrapper) not found. Skipping initialization.');
-			return;
-		}
-		
-		if (footerTexts.length === 0) {
-			console.log('[Footer Script] Footer texts (.footer-text-name) not found. Skipping initialization.');
-			return;
-		}
-		
-		console.log('[Footer Script] Found', footerTexts.length, 'footer texts. Initializing...');
+	if (footerWrapper.length === 0 || footerTexts.length === 0) return;
 
 	footerTexts.each(function () {
 		$(this).clone().appendTo(footerWrapper);
 	});
 
 	const allTexts = $('.footer-text-name');
-
 	const textWidth = allTexts.first().outerWidth(true);
 
 	const tl = gsap.timeline({ repeat: -1 });
@@ -55,7 +37,4 @@ window.Webflow.push(function() {
 			});
 		}
 	);
-	
-		console.log('[Footer Script] Initialization complete');
-	}, 100); // Small delay to let Webflow finish
 });
