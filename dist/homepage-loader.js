@@ -10,8 +10,21 @@
         if (window.RSM) {
             RSM.appendScriptToPage('homepage');
         } else {
-            // Fallback: wait for RSM
-            setTimeout(loadHomepage, 100);
+            // Wait for RSM with timeout
+            let attempts = 0;
+            const maxAttempts = 50; // 5 seconds
+            
+            const checkRSM = setInterval(function() {
+                attempts++;
+                
+                if (window.RSM) {
+                    clearInterval(checkRSM);
+                    RSM.appendScriptToPage('homepage');
+                } else if (attempts >= maxAttempts) {
+                    clearInterval(checkRSM);
+                    console.error('RSM Loader not found after 5 seconds');
+                }
+            }, 100);
         }
     }
     

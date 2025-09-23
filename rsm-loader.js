@@ -6,7 +6,8 @@
 (function() {
     'use strict';
     
-    const RSM = {
+    // Create RSM object immediately
+    window.RSM = {
         baseURL: 'https://rsm-project.netlify.app',
         loaded: new Set(),
         
@@ -77,13 +78,19 @@
         }
     };
     
-    // Make RSM globally available
-    window.RSM = RSM;
+    // Auto-load global scripts when DOM is ready
+    function initGlobalScripts() {
+        window.RSM.loadScripts([
+            'js/global/footer.js',
+            'js/global/lenis.js'
+        ]);
+    }
     
-    // Auto-load global scripts
-    RSM.loadScripts([
-        'js/global/footer.js',
-        'js/global/lenis.js'
-    ]);
+    // Initialize when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initGlobalScripts);
+    } else {
+        initGlobalScripts();
+    }
     
 })();
