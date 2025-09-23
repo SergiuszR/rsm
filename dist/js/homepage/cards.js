@@ -1,14 +1,14 @@
-document.addEventListener('DOMContentLoaded', function() {
+$(document).ready(function() {
     const cards = document.querySelectorAll('.social-update-item-wrapper');
     const container = document.querySelector('.social_update-slider-wrapper');
     
     if (!container || cards.length === 0) return;
     
     const stackGap = 20;
-    const topEdge = 25;
+    const topEdge = 150;
     const reverseEffect = true;
     const viewportHeight = window.innerHeight;
-    const totalHeight = (cards.length * viewportHeight);
+    const totalHeight = (cards.length * viewportHeight) / 1.75;
     
     container.style.height = `${totalHeight}px`;
     const activatedCards = new Set();
@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', function() {
     cards.forEach((card, index) => {
         card.style.position = 'sticky';
         card.style.top = `${topEdge + (stackGap * index)}px`;
-        card.style.height = `calc(100vh - ${topEdge}px)`;
+        card.style.height = `40rem`;
         card.style.display = 'flex';
         card.style.alignItems = 'center';
         card.style.justifyContent = 'center';

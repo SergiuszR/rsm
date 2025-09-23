@@ -64,7 +64,8 @@
             const scripts = {
                 homepage: [
                     'js/homepage/cards.js',
-                    'js/homepage/testimonials.js'
+                    'js/homepage/testimonials.js',
+                    'js/homepage/svg-anim.js'
                 ]
             };
             

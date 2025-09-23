@@ -314,5 +314,4 @@ $(document).ready(function() {
             end: 'bottom 0%',
             scrub: 0.5
         }
-    });
-});
+    })});
