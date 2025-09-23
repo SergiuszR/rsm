@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', function() {
+$(document).ready(function() {
     const cards = document.querySelectorAll('.social-update-item-wrapper');
     const container = document.querySelector('.social_update-slider-wrapper');
     
