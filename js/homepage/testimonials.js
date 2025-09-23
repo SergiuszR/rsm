@@ -1,7 +1,8 @@
 $(document).ready(function() {
+  console.log('[Testimonials Script] Initializing...');
   
   if (typeof $ === 'undefined' || typeof gsap === 'undefined') {
-    console.error('Required libraries not found');
+    console.error('[Testimonials Script] Required libraries not found (jQuery or GSAP)');
     return;
   }
   
@@ -12,11 +13,22 @@ $(document).ready(function() {
   const $nextBtn = $('[data-slider-next]');
   const $counter = $controlsWrapper.find('.text-weight-bold');
   
+  console.log('[Testimonials Script] Wrapper found:', $wrapper.length);
+  console.log('[Testimonials Script] Cards found:', $cards.length);
+  console.log('[Testimonials Script] Controls found:', $controlsWrapper.length);
 
-
+  if ($wrapper.length === 0) {
+    console.log('[Testimonials Script] No testimonials wrapper found (.testimonials_list-wrapper). Skipping initialization.');
+    return;
+  }
 
   if ($cards.length === 0) {
-    console.error('No testimonial cards found');
+    console.log('[Testimonials Script] No testimonial cards found (.testimonials_item). Skipping initialization.');
+    return;
+  }
+
+  if ($controlsWrapper.length === 0) {
+    console.log('[Testimonials Script] No controls wrapper found (.slider_controls-wrapper). Skipping initialization.');
     return;
   }
   
@@ -325,4 +337,6 @@ $(document).ready(function() {
             scrub: 0.5
         }
     });
+    
+    console.log('[Testimonials Script] Initialization complete');
 });

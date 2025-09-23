@@ -1,6 +1,22 @@
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('[Cards Script] Initializing...');
+    
     const cards = document.querySelectorAll('.social-update-item-wrapper');
     const container = document.querySelector('.social_update-slider-wrapper');
+    
+    // Check if required elements exist
+    if (!container) {
+        console.log('[Cards Script] Container .social_update-slider-wrapper not found. Skipping initialization.');
+        return;
+    }
+    
+    if (cards.length === 0) {
+        console.log('[Cards Script] No cards found with .social-update-item-wrapper. Skipping initialization.');
+        return;
+    }
+    
+    console.log('[Cards Script] Found', cards.length, 'cards and container. Initializing...');
+    
     const stackGap = 20;
     const topEdge = 25;
     
@@ -87,4 +103,6 @@ document.addEventListener('DOMContentLoaded', function() {
       
       updateCards();
     });
+    
+    console.log('[Cards Script] Initialization complete');
   });

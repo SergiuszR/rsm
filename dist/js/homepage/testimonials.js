@@ -1,9 +1,8 @@
-window.Webflow = window.Webflow || [];
-window.Webflow.push(function() {
-  console.log('=== TESTIMONIALS WEBFLOW READY ===');
+$(document).ready(function() {
+  console.log('[Testimonials Script] Initializing...');
   
   if (typeof $ === 'undefined' || typeof gsap === 'undefined') {
-    console.error('Required libraries not found');
+    console.error('[Testimonials Script] Required libraries not found (jQuery or GSAP)');
     return;
   }
   
@@ -14,11 +13,22 @@ window.Webflow.push(function() {
   const $nextBtn = $('[data-slider-next]');
   const $counter = $controlsWrapper.find('.text-weight-bold');
   
-  console.log('Cards found:', $cards.length);
-  console.log('Controls found:', $controlsWrapper.length);
-  
+  console.log('[Testimonials Script] Wrapper found:', $wrapper.length);
+  console.log('[Testimonials Script] Cards found:', $cards.length);
+  console.log('[Testimonials Script] Controls found:', $controlsWrapper.length);
+
+  if ($wrapper.length === 0) {
+    console.log('[Testimonials Script] No testimonials wrapper found (.testimonials_list-wrapper). Skipping initialization.');
+    return;
+  }
+
   if ($cards.length === 0) {
-    console.error('No testimonial cards found');
+    console.log('[Testimonials Script] No testimonial cards found (.testimonials_item). Skipping initialization.');
+    return;
+  }
+
+  if ($controlsWrapper.length === 0) {
+    console.log('[Testimonials Script] No controls wrapper found (.slider_controls-wrapper). Skipping initialization.');
     return;
   }
   
@@ -77,7 +87,7 @@ window.Webflow.push(function() {
   const initialPositions = {};
   const randomTops = generateRandomTopPositions();
   
-  console.log('Generated random tops:', randomTops);
+
   
   $cards.each(function(index) {
     const $card = $(this);
@@ -103,7 +113,7 @@ window.Webflow.push(function() {
       top: randomTop + 'px'
     });
     
-    console.log(`Card ${order} initial:`, initialPositions[order]);
+
   });
   
   // Update counter display
@@ -115,7 +125,7 @@ window.Webflow.push(function() {
   function resetCards() {
     if (isAnimating) return;
     isAnimating = true;
-    console.log('Resetting cards');
+
     
     let completed = 0;
     $cards.each(function() {
@@ -132,7 +142,7 @@ window.Webflow.push(function() {
             isAnimating = false;
             activeCardOrder = "4";
             updateCounter();
-            console.log('Reset complete');
+
           }
         }
       });
@@ -142,7 +152,7 @@ window.Webflow.push(function() {
   function activateCard(targetOrder) {
     if (isAnimating || targetOrder === activeCardOrder) return;
     isAnimating = true;
-    console.log('Activating card with order:', targetOrder);
+
     
     const cardWidth = 672;
     const revealPercentage = 0.95;
@@ -192,7 +202,7 @@ window.Webflow.push(function() {
             isAnimating = false;
             activeCardOrder = targetOrder;
             updateCounter();
-            console.log('Activation complete');
+
           }
         }
       });
@@ -264,12 +274,9 @@ window.Webflow.push(function() {
   
   // Initialize counter
   updateCounter();
-  
-  console.log('Testimonials initialized with highly randomized positions');
-});
 
 
-$(document).ready(function() {
+
     const isMobile = window.innerWidth <= 768;
     const duration = isMobile ? 0.35 : 0.4;
     
@@ -330,4 +337,6 @@ $(document).ready(function() {
             scrub: 0.5
         }
     });
+    
+    console.log('[Testimonials Script] Initialization complete');
 });

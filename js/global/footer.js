@@ -1,6 +1,21 @@
 $(document).ready(function () {
+	console.log('[Footer Script] Initializing...');
+	
 	const footerWrapper = $('.footer_text-wrapper');
 	const footerTexts = $('.footer-text-name');
+	
+	// Check if required elements exist
+	if (footerWrapper.length === 0) {
+		console.log('[Footer Script] Footer wrapper (.footer_text-wrapper) not found. Skipping initialization.');
+		return;
+	}
+	
+	if (footerTexts.length === 0) {
+		console.log('[Footer Script] Footer texts (.footer-text-name) not found. Skipping initialization.');
+		return;
+	}
+	
+	console.log('[Footer Script] Found', footerTexts.length, 'footer texts. Initializing...');
 
 	footerTexts.each(function () {
 		$(this).clone().appendTo(footerWrapper);
@@ -36,4 +51,6 @@ $(document).ready(function () {
 			});
 		}
 	);
+	
+	console.log('[Footer Script] Initialization complete');
 });
