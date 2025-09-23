@@ -1,10 +1,14 @@
-$(document).ready(function() {
-  console.log('[Testimonials Script] Initializing...');
+// Webflow-compatible initialization
+window.Webflow = window.Webflow || [];
+window.Webflow.push(function() {
+  console.log('[Testimonials Script] Webflow ready - Initializing...');
   
-  if (typeof $ === 'undefined' || typeof gsap === 'undefined') {
-    console.error('[Testimonials Script] Required libraries not found (jQuery or GSAP)');
-    return;
-  }
+  // Wait a bit for Webflow to finish its DOM manipulation
+  setTimeout(function() {
+    if (typeof $ === 'undefined' || typeof gsap === 'undefined') {
+      console.error('[Testimonials Script] Required libraries not found (jQuery or GSAP)');
+      return;
+    }
   
   const $wrapper = $('.testimonials_list-wrapper');
   const $cards = $wrapper.find('.testimonials_item');
@@ -339,4 +343,5 @@ $(document).ready(function() {
     });
     
     console.log('[Testimonials Script] Initialization complete');
+  }, 100); // Small delay to let Webflow finish
 });

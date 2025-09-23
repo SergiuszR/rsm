@@ -41,7 +41,7 @@
         console.error('[RSM Loader]', ...args);
     }
 
-    // Script loading function
+    // Script loading function with error isolation
     function loadScript(src, callback) {
         if (RSM_CONFIG.loadedScripts.has(src)) {
             log(`Script already loaded: ${src}`);
@@ -53,16 +53,27 @@
         script.src = `${RSM_CONFIG.baseURL}/${src}`;
         script.defer = true;
         
+        // Add error isolation wrapper
         script.onload = function() {
-            RSM_CONFIG.loadedScripts.add(src);
-            log(`Successfully loaded: ${src}`);
-            if (callback) callback();
+            try {
+                RSM_CONFIG.loadedScripts.add(src);
+                log(`Successfully loaded: ${src}`);
+                if (callback) callback();
+            } catch (e) {
+                error(`Error in script ${src}:`, e);
+                if (callback) callback(e);
+            }
         };
         
         script.onerror = function() {
             error(`Failed to load: ${src}`);
             if (callback) callback(new Error(`Failed to load ${src}`));
         };
+        
+        // Add global error handler for this script
+        script.addEventListener('error', function(e) {
+            error(`Script execution error in ${src}:`, e);
+        });
         
         document.head.appendChild(script);
         log(`Loading script: ${src}`);
@@ -184,6 +195,13 @@
 
     // Initialize immediately - RSM object is now available
     log('RSM Script Loader object created');
+
+    // Add global error handler to catch any unhandled errors
+    window.addEventListener('error', function(e) {
+        if (e.filename && e.filename.includes('rsm-project.netlify.app')) {
+            error('RSM Script Error:', e.message, 'at', e.filename, 'line', e.lineno);
+        }
+    });
 
     // Initialize when DOM is ready
     if (document.readyState === 'loading') {
