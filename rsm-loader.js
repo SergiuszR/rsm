@@ -6,6 +6,12 @@
 (function() {
     'use strict';
     
+    // Prevent multiple initialization
+    if (window.RSM) {
+        console.log('[RSM Loader] Already initialized');
+        return;
+    }
+    
     // Configuration
     const RSM_CONFIG = {
         baseURL: 'https://rsm-project.netlify.app', // Update this with your actual Netlify URL
@@ -20,7 +26,8 @@
             ]
         },
         loadedScripts: new Set(),
-        debug: false // Set to true for console logging
+        debug: true, // Set to true for console logging
+        initialized: false
     };
 
     // Utility functions
@@ -93,6 +100,12 @@
 
     // Main initialization function
     function initRSM() {
+        if (RSM_CONFIG.initialized) {
+            log('Already initialized');
+            return;
+        }
+        
+        RSM_CONFIG.initialized = true;
         log('Initializing RSM Script Loader');
         
         // Load global scripts first
@@ -105,7 +118,7 @@
         });
     }
 
-    // Public API
+    // Public API - Define immediately to avoid timing issues
     window.RSM = {
         // Load page-specific scripts
         appendScriptToPage: function(pageName, callback) {
@@ -156,15 +169,29 @@
         // Check if script is loaded
         isScriptLoaded: function(scriptPath) {
             return RSM_CONFIG.loadedScripts.has(scriptPath);
+        },
+
+        // Force initialization (useful for debugging)
+        init: function() {
+            initRSM();
+        },
+
+        // Get loading status
+        isReady: function() {
+            return RSM_CONFIG.initialized;
         }
     };
+
+    // Initialize immediately - RSM object is now available
+    log('RSM Script Loader object created');
 
     // Initialize when DOM is ready
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', initRSM);
     } else {
-        initRSM();
+        // DOM already loaded, initialize immediately
+        setTimeout(initRSM, 0);
     }
 
-    log('RSM Script Loader initialized');
+    log('RSM Script Loader setup complete');
 })();
