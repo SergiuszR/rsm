@@ -8,7 +8,7 @@
     
     // Configuration
     const RSM_CONFIG = {
-        baseURL: 'https://your-netlify-url.netlify.app', // Update this with your actual Netlify URL
+        baseURL: 'https://rsm-project.netlify.app', // Update this with your actual Netlify URL
         globalScripts: [
             'js/global/footer.js',
             'js/global/lenis.js'
