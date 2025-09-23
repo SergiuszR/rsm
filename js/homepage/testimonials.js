@@ -1,6 +1,4 @@
-window.Webflow = window.Webflow || [];
-window.Webflow.push(function() {
-  console.log('=== TESTIMONIALS WEBFLOW READY ===');
+$(document).ready(function() {
   
   if (typeof $ === 'undefined' || typeof gsap === 'undefined') {
     console.error('Required libraries not found');
@@ -14,9 +12,9 @@ window.Webflow.push(function() {
   const $nextBtn = $('[data-slider-next]');
   const $counter = $controlsWrapper.find('.text-weight-bold');
   
-  console.log('Cards found:', $cards.length);
-  console.log('Controls found:', $controlsWrapper.length);
-  
+
+
+
   if ($cards.length === 0) {
     console.error('No testimonial cards found');
     return;
@@ -77,7 +75,7 @@ window.Webflow.push(function() {
   const initialPositions = {};
   const randomTops = generateRandomTopPositions();
   
-  console.log('Generated random tops:', randomTops);
+
   
   $cards.each(function(index) {
     const $card = $(this);
@@ -103,7 +101,7 @@ window.Webflow.push(function() {
       top: randomTop + 'px'
     });
     
-    console.log(`Card ${order} initial:`, initialPositions[order]);
+
   });
   
   // Update counter display
@@ -115,7 +113,7 @@ window.Webflow.push(function() {
   function resetCards() {
     if (isAnimating) return;
     isAnimating = true;
-    console.log('Resetting cards');
+
     
     let completed = 0;
     $cards.each(function() {
@@ -132,7 +130,7 @@ window.Webflow.push(function() {
             isAnimating = false;
             activeCardOrder = "4";
             updateCounter();
-            console.log('Reset complete');
+
           }
         }
       });
@@ -142,7 +140,7 @@ window.Webflow.push(function() {
   function activateCard(targetOrder) {
     if (isAnimating || targetOrder === activeCardOrder) return;
     isAnimating = true;
-    console.log('Activating card with order:', targetOrder);
+
     
     const cardWidth = 672;
     const revealPercentage = 0.95;
@@ -192,7 +190,7 @@ window.Webflow.push(function() {
             isAnimating = false;
             activeCardOrder = targetOrder;
             updateCounter();
-            console.log('Activation complete');
+
           }
         }
       });
@@ -264,12 +262,9 @@ window.Webflow.push(function() {
   
   // Initialize counter
   updateCounter();
-  
-  console.log('Testimonials initialized with highly randomized positions');
-});
 
 
-$(document).ready(function() {
+
     const isMobile = window.innerWidth <= 768;
     const duration = isMobile ? 0.35 : 0.4;
     

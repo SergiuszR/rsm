@@ -1,3 +1,4 @@
+$(document).ready(function () {
 const isDesktop = window.innerWidth > 991;
 
 if (isDesktop) {
@@ -21,3 +22,4 @@ if (isDesktop) {
 
     requestAnimationFrame(raf);
 }
+})
