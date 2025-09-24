@@ -66,7 +66,8 @@
                     'js/homepage/cards.js',
                     'js/homepage/testimonials.js',
                     'js/homepage/svg-anim.js',
-                    'js/homepage/eye-anim.js'
+                    'js/homepage/eye-anim.js',
+                    'js/homepage/timeline-anim.js'
                 ]
             };
             
