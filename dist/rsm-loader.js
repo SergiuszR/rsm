@@ -85,7 +85,9 @@
     function initGlobalScripts() {
         window.RSM.loadScripts([
             'js/global/footer.js',
-            'js/global/lenis.js'
+            'js/global/lenis.js',
+            'js/global/contact-modal.js',
+            'js/global/navbar.js'
         ]);
     }
     
