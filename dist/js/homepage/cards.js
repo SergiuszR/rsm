@@ -8,32 +8,36 @@ $(document).ready(function() {
     const topEdge = 150;
     const reverseEffect = true;
     const viewportHeight = window.innerHeight;
-    const totalHeight = (cards.length * viewportHeight) / 1.75;
     
+    // Container height capped at 4000px
+    const calculatedHeight = cards.length * viewportHeight;
+    const totalHeight = Math.min(calculatedHeight, 4000);
     container.style.height = `${totalHeight}px`;
+    
     const activatedCards = new Set();
     
     cards.forEach((card, index) => {
         card.style.position = 'sticky';
-        card.style.top = `${topEdge + (stackGap * index)}px`;
+        card.style.top = `${topEdge}px`; 
         card.style.height = `40rem`;
         card.style.display = 'flex';
         card.style.alignItems = 'center';
         card.style.justifyContent = 'center';
-        card.style.zIndex = index + 1;
+        card.style.zIndex = index + 1; 
         card.style.transition = 'transform 0.5s ease';
         card.style.margin = '0px auto';
         
+        // Initial positioning with transform
+        const initialOffset = stackGap * index;
         if (reverseEffect) {
-            card.style.transform = 'scale(1)';
+            card.style.transform = `translateY(${initialOffset}px) scale(1)`;
         } else {
-            card.style.transform = 'scale(0.84)';
+            card.style.transform = `translateY(${initialOffset}px) scale(0.84)`;
         }
     });
     
     function updateCards() {
         const scrollPosition = window.scrollY;
-        const currentVisibleCard = Math.floor(scrollPosition / viewportHeight);
         
         cards.forEach((card, index) => {
             const rect = card.getBoundingClientRect();
@@ -41,25 +45,27 @@ $(document).ready(function() {
             const cardBottomInViewport = rect.bottom;
             const triggerPosition = viewportHeight * 0.7;
             
+            // Calculate the offset for stacking
+            const stackOffset = stackGap * index;
+            
+            // Determine if card should be activated
+            const shouldActivate = cardTopInViewport <= triggerPosition && cardBottomInViewport > 0;
+            
             if (reverseEffect) {
-                if (cardTopInViewport <= triggerPosition && cardBottomInViewport > 0 && !activatedCards.has(index)) {
+                if (shouldActivate && !activatedCards.has(index)) {
                     activatedCards.add(index);
-                    card.style.transform = 'scale(0.84)';
-                }
-                
-                if (cardTopInViewport > triggerPosition && activatedCards.has(index)) {
+                    card.style.transform = `translateY(${stackOffset}px) scale(0.84)`;
+                } else if (!shouldActivate && activatedCards.has(index)) {
                     activatedCards.delete(index);
-                    card.style.transform = 'scale(1)';
+                    card.style.transform = `translateY(${stackOffset}px) scale(1)`;
                 }
             } else {
-                if (cardTopInViewport <= triggerPosition && cardBottomInViewport > 0 && !activatedCards.has(index)) {
+                if (shouldActivate && !activatedCards.has(index)) {
                     activatedCards.add(index);
-                    card.style.transform = 'scale(1)';
-                }
-                
-                if (cardTopInViewport > triggerPosition && activatedCards.has(index)) {
+                    card.style.transform = `translateY(${stackOffset}px) scale(1)`;
+                } else if (!shouldActivate && activatedCards.has(index)) {
                     activatedCards.delete(index);
-                    card.style.transform = 'scale(0.84)';
+                    card.style.transform = `translateY(${stackOffset}px) scale(0.84)`;
                 }
             }
         });
@@ -73,14 +79,10 @@ $(document).ready(function() {
     
     window.addEventListener('resize', () => {
         const newViewportHeight = window.innerHeight;
-        const newTotalHeight = (cards.length * newViewportHeight);
+        const calculatedHeight = cards.length * newViewportHeight;
+        const newTotalHeight = Math.min(calculatedHeight, 4000);
         container.style.height = `${newTotalHeight}px`;
-        
-        cards.forEach((card, index) => {
-            card.style.top = `${topEdge + (stackGap * index)}px`;
-            card.style.height = `calc(100vh - ${topEdge}px)`;
-        });
-        
         updateCards();
     });
 });
+r
