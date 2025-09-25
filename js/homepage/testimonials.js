@@ -11,8 +11,9 @@ $(document).ready(function() {
   if ($wrapper.length === 0 || $cards.length === 0 || $controlsWrapper.length === 0) return;
   
   let isAnimating = false;
-  let activeCardOrder = "4";
+  let currentSlidePosition = 1; // Track how many cards have been revealed (1 = no cards pushed, 2 = 1 card pushed, etc.)
   const totalCards = $cards.length;
+  const maxSlidePosition = totalCards; // We can push cards until only one is visible
   
   // Generate much more random top positions
   function generateRandomTopPositions() {
@@ -96,8 +97,24 @@ $(document).ready(function() {
   
   // Update counter display
   function updateCounter() {
-    const currentPosition = parseInt(activeCardOrder);
-    $counter.text(`${currentPosition}/${totalCards}`);
+    $counter.text(`${currentSlidePosition}/${totalCards}`);
+  }
+
+  // Update arrow states based on current position
+  function updateArrowStates() {
+    // Update left arrow
+    if (currentSlidePosition === 1) {
+      $prevBtn.addClass('is-disabled');
+    } else {
+      $prevBtn.removeClass('is-disabled');
+    }
+    
+    // Update right arrow
+    if (currentSlidePosition === maxSlidePosition) {
+      $nextBtn.addClass('is-disabled');
+    } else {
+      $nextBtn.removeClass('is-disabled');
+    }
   }
   
   function resetCards() {
@@ -118,96 +135,89 @@ $(document).ready(function() {
           completed++;
           if (completed === $cards.length) {
             isAnimating = false;
-            activeCardOrder = "4";
+            currentSlidePosition = 1;
             updateCounter();
-
+            updateArrowStates();
           }
         }
       });
     });
   }
   
-  function activateCard(targetOrder) {
-    if (isAnimating || targetOrder === activeCardOrder) return;
+  
+  // Navigation functions
+  function goToPreviousCard() {
+    if (isAnimating || $prevBtn.hasClass('is-disabled')) return;
+    
+    if (currentSlidePosition > 1) {
+      currentSlidePosition--;
+      pushCardsToPosition();
+    }
+  }
+  
+  function goToNextCard() {
+    if (isAnimating || $nextBtn.hasClass('is-disabled')) return;
+    
+    if (currentSlidePosition < maxSlidePosition) {
+      currentSlidePosition++;
+      pushCardsToPosition();
+    }
+  }
+  
+  // New function to handle pushing cards based on current slide position
+  function pushCardsToPosition() {
+    if (isAnimating) return;
     isAnimating = true;
-
     
     const cardWidth = 672;
     const revealPercentage = 0.95;
-    const targetOrderNum = parseInt(targetOrder);
     
-    let firstCardToMove = null;
-    let minOrderToMove = Infinity;
-    
+    // Get all card orders and sort them
+    const cardOrders = [];
     $cards.each(function() {
-      const currentOrderNum = parseInt($(this).attr('data-order'));
-      if (currentOrderNum > targetOrderNum && currentOrderNum < minOrderToMove) {
-        minOrderToMove = currentOrderNum;
-        firstCardToMove = $(this);
-      }
+      cardOrders.push(parseInt($(this).attr('data-order')));
     });
+    cardOrders.sort((a, b) => a - b);
     
-    let moveAmount = 0;
-    if (firstCardToMove) {
-      const targetCardLeft = initialPositions[targetOrder].left;
-      const firstCardToMoveLeft = initialPositions[minOrderToMove.toString()].left;
-      
-      const neededPosition = targetCardLeft + (cardWidth * revealPercentage);
-      moveAmount = neededPosition - firstCardToMoveLeft;
-    }
+    // Determine how many cards should be pushed (currentSlidePosition - 1)
+    const cardsToPush = currentSlidePosition - 1;
     
     let completed = 0;
     
     $cards.each(function() {
-      const currentOrder = $(this).attr('data-order');
-      const currentOrderNum = parseInt(currentOrder);
+      const currentOrder = parseInt($(this).attr('data-order'));
+      const currentOrderIndex = cardOrders.indexOf(currentOrder);
       
       let targetX = 0;
+      let targetZIndex = initialPositions[currentOrder.toString()].zIndex;
       
-      if (currentOrderNum > targetOrderNum) {
-        targetX = moveAmount;
+      // If this card should be pushed (it's among the highest order cards to push)
+      if (cardsToPush > 0 && currentOrderIndex >= (totalCards - cardsToPush)) {
+        // All pushed cards go to the same position to maintain stacking
+        targetX = cardWidth * revealPercentage;
+      }
+      
+      // If this is the frontmost visible card, give it highest z-index
+      if (cardsToPush === 0 || currentOrderIndex === (totalCards - cardsToPush - 1)) {
+        targetZIndex = 100;
       }
       
       gsap.to(this, {
         x: targetX,
         y: 0,
-        zIndex: currentOrder === targetOrder ? 100 : initialPositions[currentOrder].zIndex,
+        zIndex: targetZIndex,
         duration: 0.7,
         ease: "power2.out",
         onComplete: function() {
           completed++;
           if (completed === $cards.length) {
             isAnimating = false;
-            activeCardOrder = targetOrder;
             updateCounter();
-
+            updateArrowStates();
           }
         }
       });
     });
-  }
-  
-  // Navigation functions
-  function goToPreviousCard() {
-    if (isAnimating) return;
-    
-    const currentOrderNum = parseInt(activeCardOrder);
-    const previousOrderNum = currentOrderNum - 1;
-    
-    if (previousOrderNum >= 1) {
-      activateCard(previousOrderNum.toString());
-    }
-  }
-  
-  function goToNextCard() {
-    if (isAnimating) return;
-    
-    const currentOrderNum = parseInt(activeCardOrder);
-    const nextOrderNum = currentOrderNum + 1;
-    
-    if (nextOrderNum <= totalCards) {
-      activateCard(nextOrderNum.toString());
-    }
   }
   
   // Card click handlers
@@ -220,14 +230,45 @@ $(document).ready(function() {
       
       if (isAnimating) return;
       
-      if (order === "4" && activeCardOrder === "4") {
+      // Get all card orders and sort them (lowest to highest)
+      const cardOrders = [];
+      $cards.each(function() {
+        cardOrders.push(parseInt($(this).attr('data-order')));
+      });
+      cardOrders.sort((a, b) => a - b);
+      
+      const clickedOrder = parseInt(order);
+      const clickedOrderIndex = cardOrders.indexOf(clickedOrder);
+      
+      // Determine which card is currently the frontmost visible card
+      const cardsToPush = currentSlidePosition - 1;
+      const frontmostVisibleIndex = totalCards - cardsToPush - 1;
+      
+      // If we're at position 1 and clicked the lowest order card (frontmost), do nothing
+      if (currentSlidePosition === 1 && clickedOrderIndex === frontmostVisibleIndex) {
         return;
       }
       
-      if (order === activeCardOrder && activeCardOrder !== "4") {
+      // If clicked card is currently the frontmost visible card and we're not at position 1, reset to position 1
+      if (clickedOrderIndex === frontmostVisibleIndex && currentSlidePosition !== 1) {
         resetCards();
-      } else {
-        activateCard(order);
+        return;
+      }
+      
+      // If clicked a card that's currently pushed (not visible), bring it to front
+      if (clickedOrderIndex > frontmostVisibleIndex) {
+        // Calculate how many cards need to be pushed to make this card the frontmost visible
+        const newCardsToPush = totalCards - clickedOrderIndex - 1;
+        currentSlidePosition = newCardsToPush + 1;
+        pushCardsToPosition();
+        return;
+      }
+      
+      // If clicked a card that's behind the current frontmost visible card, make it frontmost
+      if (clickedOrderIndex < frontmostVisibleIndex) {
+        const newCardsToPush = totalCards - clickedOrderIndex - 1;
+        currentSlidePosition = newCardsToPush + 1;
+        pushCardsToPosition();
       }
     });
     
@@ -250,8 +291,9 @@ $(document).ready(function() {
     goToNextCard();
   });
   
-  // Initialize counter
+  // Initialize counter and arrow states
   updateCounter();
+  updateArrowStates();
 
 
 
