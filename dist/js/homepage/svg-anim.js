@@ -1,5 +1,5 @@
 $(document).ready(function() {
-    $('svg').each(function() {
+    $('svg:not(#nav-logo)').each(function() {
         var $svg = $(this);
         var paths = $svg.find('path');
         
