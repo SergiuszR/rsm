@@ -9,9 +9,34 @@ $(document).ready(function() {
     const reverseEffect = true;
     const viewportHeight = window.innerHeight;
     
-    // Container height capped at 4000px
+    // Responsive container height that scales with viewport width
+    function getResponsiveMaxHeight() {
+        const vw = window.innerWidth;
+        
+        if (vw >= 1441) {
+            // Large desktop - scale up significantly
+            return 4000 + (vw - 1441) * 2; // Increases by 2px per viewport pixel above 1441px
+        } else if (vw >= 1200) {
+            // Desktop - moderate scaling
+            return 3200 + (vw - 1200) * 3.32; // Scales from 3200px to 4000px between 1200-1441px
+        } else if (vw >= 992) {
+            // Tablet landscape - smaller scaling
+            return 2800 + (vw - 992) * 1.92; // Scales from 2800px to 3200px between 992-1200px
+        } else if (vw >= 768) {
+            // Tablet portrait
+            return 2400 + (vw - 768) * 1.79; // Scales from 2400px to 2800px between 768-992px
+        } else if (vw >= 480) {
+            // Mobile landscape
+            return 2000 + (vw - 480) * 1.39; // Scales from 2000px to 2400px between 480-768px
+        } else {
+            // Mobile portrait - minimum height
+            return 1800 + (vw - 320) * 1.25; // Scales from 1800px to 2000px between 320-480px
+        }
+    }
+    
     const calculatedHeight = cards.length * viewportHeight;
-    const totalHeight = Math.min(calculatedHeight, 4000);
+    const responsiveMaxHeight = getResponsiveMaxHeight();
+    const totalHeight = Math.min(calculatedHeight, responsiveMaxHeight);
     container.style.height = `${totalHeight}px`;
     
     const activatedCards = new Set();
@@ -80,7 +105,8 @@ $(document).ready(function() {
     window.addEventListener('resize', () => {
         const newViewportHeight = window.innerHeight;
         const calculatedHeight = cards.length * newViewportHeight;
-        const newTotalHeight = Math.min(calculatedHeight, 4000);
+        const newResponsiveMaxHeight = getResponsiveMaxHeight();
+        const newTotalHeight = Math.min(calculatedHeight, newResponsiveMaxHeight);
         container.style.height = `${newTotalHeight}px`;
         updateCards();
     });
