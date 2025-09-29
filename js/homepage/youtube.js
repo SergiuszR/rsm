@@ -1,4 +1,4 @@
-
+$(document).ready(function() {
 (function loadYT() {
     if (window.YT && YT.Player) return;
     var s = document.createElement('script');
@@ -96,3 +96,4 @@ function initHoverPlayers() {
 window.onYouTubeIframeAPIReady = function() {
     initHoverPlayers();
 };
+});
