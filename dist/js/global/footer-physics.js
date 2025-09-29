@@ -1,41 +1,57 @@
 $(document).ready(function () {
     gsap.registerPlugin(ScrollTrigger);
   
-    let engine, world, bodies = [];
-    let isPhysicsActive = false;
+    let physicsInstances = new Map(); // Track multiple physics instances
   
     setTimeout(() => {
       initScrollTrigger();
     }, 100);
   
     function initScrollTrigger() {
-      const footer = document.querySelector('.footer_component');
-      const wrapper = document.querySelector('.physics_wrapper');
+      const physicsElements = document.querySelectorAll('[data-physics]');
       
-      if (!footer || !wrapper) {
-        console.error('Footer or wrapper not found');
+      if (physicsElements.length === 0) {
+        console.error('No [data-physics] elements found');
         return;
       }
   
-      ScrollTrigger.create({
-        trigger: ".footer_component",
-        start: "top 80%",
-        onEnter: () => {
-          if (!isPhysicsActive) {
-            initPhysics();
-            dropIcons();
-            isPhysicsActive = true;
-          }
+      physicsElements.forEach((element, index) => {
+        // Check if the [data-physics] element itself has the physics_wrapper class
+        let wrapper = null;
+        if (element.classList.contains('physics_wrapper')) {
+          wrapper = element;
+        } else {
+          wrapper = element.querySelector('.physics_wrapper');
         }
+        
+        if (!wrapper) {
+          console.error('Physics wrapper not found - [data-physics] element should either be .physics_wrapper or contain .physics_wrapper');
+          return;
+        }
+        
+        const instanceId = `physics-${index}`;
+        
+        ScrollTrigger.create({
+          trigger: element,
+          start: "top 80%",
+          onEnter: () => {
+            if (!physicsInstances.has(instanceId)) {
+              const instance = initPhysics(wrapper);
+              if (instance) {
+                dropIcons(wrapper, instance);
+                physicsInstances.set(instanceId, instance);
+              }
+            }
+          }
+        });
       });
     }
   
-    function initPhysics() {
-      const wrapper = document.querySelector('.physics_wrapper');
-      if (!wrapper) return;
+    function initPhysics(wrapper) {
+      if (!wrapper) return null;
   
-      engine = Matter.Engine.create();
-      world = engine.world;
+      const engine = Matter.Engine.create();
+      const world = engine.world;
       engine.world.gravity.y = 1; // Slightly stronger gravity for better bounce
       
       const wrapperWidth = wrapper.offsetWidth;
@@ -77,11 +93,16 @@ $(document).ready(function () {
       
       Matter.World.add(world, [ground, leftWall, rightWall]);
       Matter.Engine.run(engine);
+      
+      return {
+        engine,
+        world,
+        bodies: []
+      };
     }
   
-    function dropIcons() {
-      const icons = document.querySelectorAll('.physics_icon');
-      const wrapper = document.querySelector('.physics_wrapper');
+    function dropIcons(wrapper, instance) {
+      const icons = wrapper.querySelectorAll('.physics_icon');
       
       if (!wrapper || icons.length === 0) {
         console.error('Wrapper or icons not found');
@@ -110,20 +131,19 @@ $(document).ready(function () {
           }
         );
         
-        bodies.push({ element: icon, body: body });
-        Matter.World.add(world, body);
-        addImprovedDragInteraction(icon, body);
+        instance.bodies.push({ element: icon, body: body });
+        Matter.World.add(instance.world, body);
+        addImprovedDragInteraction(icon, body, wrapper, instance);
       });
       
-      // Animation loop
+      // Animation loop for this specific instance
       function animate() {
-        const wrapper = document.querySelector('.physics_wrapper');
-        if (!wrapper) return;
+        if (!wrapper || !wrapper.isConnected) return; // Stop if wrapper is removed from DOM
         
         const wrapperHeight = wrapper.offsetHeight;
         const wrapperWidth = wrapper.offsetWidth;
         
-        bodies.forEach(({ element, body }) => {
+        instance.bodies.forEach(({ element, body }) => {
           let x = body.position.x - element.offsetWidth / 2;
           let y = body.position.y - element.offsetHeight / 2;
           
@@ -140,7 +160,7 @@ $(document).ready(function () {
       animate();
     }
   
-    function addImprovedDragInteraction(element, body) {
+    function addImprovedDragInteraction(element, body, wrapper, instance) {
       let isDragging = false;
       let mouseConstraint = null;
       let dragOffset = { x: 0, y: 0 };
@@ -156,7 +176,6 @@ $(document).ready(function () {
         element.style.transform += ' scale(1.1)'; // Visual feedback
         
         // Calculate offset from element center
-        const wrapper = document.querySelector('.physics_wrapper');
         const wrapperRect = wrapper.getBoundingClientRect();
         const elementRect = element.getBoundingClientRect();
         
@@ -175,7 +194,7 @@ $(document).ready(function () {
           length: 0            // No slack in constraint
         });
         
-        Matter.World.add(world, mouseConstraint);
+        Matter.World.add(instance.world, mouseConstraint);
         
         // Reduce physics temporarily while dragging
         body.frictionAir = 0.1;
@@ -183,7 +202,6 @@ $(document).ready(function () {
       
       document.addEventListener('mousemove', (e) => {
         if (isDragging && mouseConstraint) {
-          const wrapper = document.querySelector('.physics_wrapper');
           const wrapperRect = wrapper.getBoundingClientRect();
           
           // Use the drag offset for more natural feel
@@ -201,7 +219,7 @@ $(document).ready(function () {
           element.style.transform = element.style.transform.replace(' scale(1.1)', ''); // Remove scale
           
           if (mouseConstraint) {
-            Matter.World.remove(world, mouseConstraint);
+            Matter.World.remove(instance.world, mouseConstraint);
             mouseConstraint = null;
           }
           
@@ -225,7 +243,7 @@ $(document).ready(function () {
           element.style.transform = element.style.transform.replace(' scale(1.1)', '');
           
           if (mouseConstraint) {
-            Matter.World.remove(world, mouseConstraint);
+            Matter.World.remove(instance.world, mouseConstraint);
             mouseConstraint = null;
           }
           
