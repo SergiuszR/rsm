@@ -69,7 +69,8 @@
                     'js/homepage/eye-anim.js',
                     'js/homepage/timeline-anim.js',
                     'js/homepage/services-anim.js',
-                    'js/homepage/blog-anim.js'
+                    'js/homepage/blog-anim.js',
+                    'js/homepage/youtube.js'
                 ]
             };
             
