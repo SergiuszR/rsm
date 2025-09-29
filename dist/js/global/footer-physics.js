@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', function() {
+$(document).ready(function () {
     gsap.registerPlugin(ScrollTrigger);
   
     let engine, world, bodies = [];
