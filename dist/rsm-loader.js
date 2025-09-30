@@ -91,7 +91,8 @@
             'js/global/lenis.js',
             'js/global/contact-modal.js',
             'js/global/navbar.js',
-            'js/global/footer-physics.js'
+            'js/global/footer-physics.js',
+            'js/global/utils.js'
         ]);
     }
     
