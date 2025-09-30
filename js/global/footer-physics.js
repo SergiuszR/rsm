@@ -29,15 +29,11 @@ $(document).ready(function () {
           return;
         }
         
-        // Get the trigger value from data-physics attribute (default to 80 if not specified)
-        const triggerValue = element.getAttribute('data-physics') || '80';
-        const startTrigger = `top ${triggerValue}%`;
-        
         const instanceId = `physics-${index}`;
         
         ScrollTrigger.create({
           trigger: element,
-          start: startTrigger,
+          start: "top 80%",
           onEnter: () => {
             if (!physicsInstances.has(instanceId)) {
               const instance = initPhysics(wrapper);
