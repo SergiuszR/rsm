@@ -29,11 +29,15 @@ $(document).ready(function () {
           return;
         }
         
+        // Get the trigger value from data-physics attribute (default to 80 if not specified)
+        const triggerValue = element.getAttribute('data-physics') || '80';
+        const startTrigger = `top ${triggerValue}%`;
+        
         const instanceId = `physics-${index}`;
         
         ScrollTrigger.create({
           trigger: element,
-          start: "top 80%",
+          start: startTrigger,
           onEnter: () => {
             if (!physicsInstances.has(instanceId)) {
               const instance = initPhysics(wrapper);
@@ -139,11 +143,15 @@ $(document).ready(function () {
       // Animation loop for this specific instance
       function animate() {
         if (!wrapper || !wrapper.isConnected) return; // Stop if wrapper is removed from DOM
+        if (!instance || !instance.bodies || !Array.isArray(instance.bodies)) return; // Safety check
         
         const wrapperHeight = wrapper.offsetHeight;
         const wrapperWidth = wrapper.offsetWidth;
         
-        instance.bodies.forEach(({ element, body }) => {
+        instance.bodies.forEach((bodyData) => {
+          if (!bodyData || !bodyData.element || !bodyData.body) return; // Safety check
+          
+          const { element, body } = bodyData;
           let x = body.position.x - element.offsetWidth / 2;
           let y = body.position.y - element.offsetHeight / 2;
           
