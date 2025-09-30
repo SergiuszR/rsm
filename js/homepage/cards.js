@@ -9,42 +9,59 @@ $(document).ready(function() {
     const reverseEffect = true;
     const viewportHeight = window.innerHeight;
     
-    // Responsive container height that scales with viewport width
-    function getResponsiveMaxHeight() {
-        const vw = window.innerWidth;
-        
-        if (vw >= 1441) {
-            // Large desktop - scale up significantly
-            return 4000 + (vw - 1441) * 2; // Increases by 2px per viewport pixel above 1441px
-        } else if (vw >= 1200) {
-            // Desktop - moderate scaling
-            return 3200 + (vw - 1200) * 3.32; // Scales from 3200px to 4000px between 1200-1441px
-        } else if (vw >= 992) {
-            // Tablet landscape - smaller scaling
-            return 2800 + (vw - 992) * 1.92; // Scales from 2800px to 3200px between 992-1200px
-        } else if (vw >= 768) {
-            // Tablet portrait
-            return 2400 + (vw - 768) * 1.79; // Scales from 2400px to 2800px between 768-992px
-        } else if (vw >= 480) {
-            // Mobile landscape
-            return 2000 + (vw - 480) * 1.39; // Scales from 2000px to 2400px between 480-768px
-        } else {
-            // Mobile portrait - minimum height
-            return 1800 + (vw - 320) * 1.25; // Scales from 1800px to 2000px between 320-480px
+    // Dynamic container height calculation
+    function calculateDynamicHeight() {
+        // Calculate actual rem value based on fluid typography
+        function getFluidRemValue() {
+            const vw = window.innerWidth;
+            let remInPx;
+            
+            if (vw >= 1441) {
+                // html { font-size: calc(1rem + 0.25vw); }
+                remInPx = 16 + (0.17 * vw / 100);
+            } else if (vw >= 992) {
+                // html { font-size: calc(0.39866369710467703rem + 0.6681514476614699vw); }
+                remInPx = (0.39866369710467703 * 16) + (0.6681514476614699 * vw / 100);
+            } else if (vw >= 768) {
+                // html { font-size: calc(0.1704799107142858rem + 1.3392857142857142vw); }
+                remInPx = (0.1704799107142858 * 16) + (1.3392857142857142 * vw / 100);
+            } else if (vw >= 480) {
+                // html { font-size: calc(0.6671006944444444rem + 0.6944444444444444vw); }
+                remInPx = (0.6671006944444444 * 16) + (0.6944444444444444 * vw / 100);
+            } else {
+                // html { font-size: calc(0.8747384937238494rem + 0.41841004184100417vw); }
+                remInPx = (0.8747384937238494 * 16) + (0.41841004184100417 * vw / 100);
+            }
+            
+            return remInPx;
         }
+        
+        const remValue = getFluidRemValue();
+        const cardHeight = 40 * remValue; // 40rem in actual pixels
+        const numberOfCards = cards.length;
+        const vh = window.innerHeight;
+        
+        // Responsive calculation that scales with actual card size
+        // Need more space per card to prevent overlap
+        const scrollSpacePerCard = cardHeight * 1.2; // Increased from 0.8 to 1.2
+        const totalScrollSpace = numberOfCards * scrollSpacePerCard;
+        
+        // Increased buffers to ensure proper spacing
+        const initialBuffer = Math.max(vh * 0.4, cardHeight * 0.6);
+        const endBuffer = Math.max(vh * 0.4, cardHeight * 0.8); // Larger end buffer
+        
+        return totalScrollSpace + initialBuffer + endBuffer;
     }
     
-    const calculatedHeight = cards.length * viewportHeight;
-    const responsiveMaxHeight = getResponsiveMaxHeight();
-    const totalHeight = Math.min(calculatedHeight, responsiveMaxHeight);
-    container.style.height = `${totalHeight}px`;
+    const dynamicHeight = calculateDynamicHeight();
+    container.style.height = `${dynamicHeight}px`;
     
     const activatedCards = new Set();
     
     cards.forEach((card, index) => {
         card.style.position = 'sticky';
         card.style.top = `${topEdge}px`; 
-        card.style.height = `40rem`;
+        card.style.height = `45em`;
         card.style.display = 'flex';
         card.style.alignItems = 'center';
         card.style.justifyContent = 'center';
@@ -103,12 +120,8 @@ $(document).ready(function() {
     });
     
     window.addEventListener('resize', () => {
-        const newViewportHeight = window.innerHeight;
-        const calculatedHeight = cards.length * newViewportHeight;
-        const newResponsiveMaxHeight = getResponsiveMaxHeight();
-        const newTotalHeight = Math.min(calculatedHeight, newResponsiveMaxHeight);
-        container.style.height = `${newTotalHeight}px`;
+        const newDynamicHeight = calculateDynamicHeight();
+        container.style.height = `${newDynamicHeight}px`;
         updateCards();
     });
 });
-r
