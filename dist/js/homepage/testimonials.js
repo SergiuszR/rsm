@@ -169,7 +169,8 @@ $(document).ready(function() {
     if (isAnimating) return;
     isAnimating = true;
     
-    const cardWidth = 672;
+    // Get actual card width dynamically to work with fluid typography
+    const cardWidth = $cards.first().outerWidth();
     const revealPercentage = 0.95;
     
     // Get all card orders and sort them
