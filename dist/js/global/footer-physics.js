@@ -31,15 +31,20 @@ $(document).ready(function () {
         
         // Get the trigger value from data-physics attribute (default to 80 if not specified)
         const triggerValue = element.getAttribute('data-physics') || '80';
-        const startTrigger = `top ${triggerValue}%`;
+        const numericValue = parseInt(triggerValue, 10);
+        
+        console.log(`Physics element ${index}: triggerValue="${triggerValue}", numericValue=${numericValue} (${numericValue}% visibility)`);
         
         const instanceId = `physics-${index}`;
         
         ScrollTrigger.create({
           trigger: element,
-          start: startTrigger,
-          onEnter: () => {
-            if (!physicsInstances.has(instanceId)) {
+          start: "top bottom",
+          end: "bottom top",
+          onUpdate: (self) => {
+            // Check if element has reached the desired visibility percentage
+            const visibility = Math.round(self.progress * 100);
+            if (visibility >= numericValue && !physicsInstances.has(instanceId)) {
               const instance = initPhysics(wrapper);
               if (instance) {
                 dropIcons(wrapper, instance);
@@ -117,6 +122,12 @@ $(document).ready(function () {
       const wrapperWidth = wrapper.offsetWidth;
       
       icons.forEach((icon, index) => {
+        // Safety check for icon element
+        if (!icon || !icon.offsetWidth || !icon.offsetHeight) {
+          console.warn(`Skipping invalid icon at index ${index}`);
+          return;
+        }
+        
         const randomX = Math.random() * Math.max(0, wrapperWidth - icon.offsetWidth);
         
         icon.style.left = `${randomX}px`;
@@ -142,28 +153,44 @@ $(document).ready(function () {
       
       // Animation loop for this specific instance
       function animate() {
-        if (!wrapper || !wrapper.isConnected) return; // Stop if wrapper is removed from DOM
-        if (!instance || !instance.bodies || !Array.isArray(instance.bodies)) return; // Safety check
-        
-        const wrapperHeight = wrapper.offsetHeight;
-        const wrapperWidth = wrapper.offsetWidth;
-        
-        instance.bodies.forEach((bodyData) => {
-          if (!bodyData || !bodyData.element || !bodyData.body) return; // Safety check
+        try {
+          if (!wrapper || !wrapper.isConnected) return; // Stop if wrapper is removed from DOM
+          if (!instance || !instance.bodies || !Array.isArray(instance.bodies)) return; // Safety check
+          if (instance.bodies.length === 0) return; // No bodies to animate
           
-          const { element, body } = bodyData;
-          let x = body.position.x - element.offsetWidth / 2;
-          let y = body.position.y - element.offsetHeight / 2;
+          const wrapperHeight = wrapper.offsetHeight;
+          const wrapperWidth = wrapper.offsetWidth;
           
-          // Soft constraints (allow slight overflow for bounce effect)
-          x = Math.max(-10, Math.min(x, wrapperWidth - element.offsetWidth + 10));
-          y = Math.max(-50, Math.min(y, wrapperHeight - element.offsetHeight + 5));
-          
-          element.style.left = `${x}px`;
-          element.style.top = `${y}px`;
-          element.style.transform = `rotate(${body.angle}rad)`;
-        });
-        requestAnimationFrame(animate);
+          instance.bodies.forEach((bodyData, index) => {
+            if (!bodyData || !bodyData.element || !bodyData.body) {
+              console.warn(`Invalid body data at index ${index}, skipping`);
+              return; // Safety check
+            }
+            
+            const { element, body } = bodyData;
+            
+            // Additional safety checks
+            if (!element || !body || !body.position) {
+              console.warn(`Invalid element or body at index ${index}, skipping`);
+              return;
+            }
+            
+            let x = body.position.x - element.offsetWidth / 2;
+            let y = body.position.y - element.offsetHeight / 2;
+            
+            // Soft constraints (allow slight overflow for bounce effect)
+            x = Math.max(-10, Math.min(x, wrapperWidth - element.offsetWidth + 10));
+            y = Math.max(-50, Math.min(y, wrapperHeight - element.offsetHeight + 5));
+            
+            element.style.left = `${x}px`;
+            element.style.top = `${y}px`;
+            element.style.transform = `rotate(${body.angle}rad)`;
+          });
+          requestAnimationFrame(animate);
+        } catch (error) {
+          console.error('Animation loop error:', error);
+          // Stop the animation loop on error
+        }
       }
       animate();
     }

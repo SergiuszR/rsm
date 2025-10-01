@@ -31,3 +31,39 @@ $(document).ready(function() {
         }
     });
 });
+
+/* Swiper */
+
+document.addEventListener('DOMContentLoaded', () => {
+    const container = document.querySelector('.podcasts_wrapper');
+    if (!container) return;
+
+    const swiper = new Swiper(container, {
+        wrapperClass: 'showcase_grid',
+        slideClass: 'showcase_item-outer',
+
+        slidesPerView: 'auto',
+        spaceBetween: 24,
+        loop: true,
+
+        navigation: {
+            nextEl: '.swiper_control.is-next',
+            prevEl: '.swiper_control.is-prev',
+        },
+
+        pagination: { enabled: false },
+        grabCursor: true,
+        watchOverflow: true,
+        observer: true,
+        observeParents: true,
+    });
+
+    // Prevent anchors from jumping to top
+    document.querySelectorAll('.swiper_control.is-prev, .swiper_control.is-next')
+        .forEach(a => a.addEventListener('click', e => e.preventDefault()));
+
+    const update = () => swiper.update();
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(update);
+    window.addEventListener('load', update, { once: true });
+    setTimeout(update, 200);
+});
