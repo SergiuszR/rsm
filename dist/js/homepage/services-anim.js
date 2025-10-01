@@ -35,7 +35,7 @@ $(document).ready(function() {
 // On hover
 
 // Wait for DOM to be fully loaded
-document.addEventListener('DOMContentLoaded', function() {
+$(document).ready(function() {
   
   // Initialize GSAP
   gsap.registerPlugin();
