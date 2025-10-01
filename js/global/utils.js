@@ -34,7 +34,7 @@ $(document).ready(function() {
 
 /* Swiper */
 
-document.addEventListener('DOMContentLoaded', () => {
+$(document).ready(function() {
     const container = document.querySelector('.podcasts_wrapper');
     if (!container) return;
 
