@@ -53,6 +53,9 @@ $(document).ready(function() {
   document.querySelectorAll('.accordion_item').forEach((item, index) => {
     const header = item.querySelector('.accordion_header');
     const body = item.querySelector('.accordion_body');
+    const arrowWrapper = item.querySelector('.arrow-wrapper.is-absolute');
+    const arrow = arrowWrapper ? arrowWrapper.querySelector('.arrow') : null;
+    const starBackground = arrowWrapper ? arrowWrapper.querySelector('.star-background') : null;
     
     // Function to activate item
     function activateItem() {
@@ -68,32 +71,54 @@ $(document).ready(function() {
       currentlyHovered = item;
       
       // Kill any existing animations on this item
-      gsap.killTweensOf([header, body]);
+      gsap.killTweensOf([header, body, arrow, starBackground].filter(Boolean));
       
       // Header goes way up with opacity fade
-      gsap.to(header, {
-        y: '-100%',
-        opacity: 0,
-        duration: 0.4,
-        ease: "power2.in"
-      });
-      
-      // Body loses blur and becomes visible
-      gsap.to(body, {
-        filter: 'blur(0px)',
-        opacity: 1,
-        duration: 0.5,
-        ease: "power2.out"
-      });
+gsap.to(header, {
+  y: '-100%',
+  opacity: 0,
+  duration: 0.4,
+  ease: "power1.in"
+});
+
+// Body loses blur and becomes visible
+gsap.to(body, {
+  filter: 'blur(0px)',
+  opacity: 1,
+  duration: 0.5,
+  ease: "power1.out"
+});
+
+// Rotate arrow 90 degrees clockwise
+if (arrow) {
+  gsap.to(arrow, {
+    rotation: 90,
+    duration: 0.6,
+    ease: "power1.out"
+  });
+}
+
+// Set star background opacity to 1
+if (starBackground) {
+  gsap.to(starBackground, {
+    opacity: 1,
+    duration: 0.6,
+    ease: "power1.out"
+  });
+}
+
     }
     
     // Function to deactivate item
     function deactivateItem(targetItem) {
       const targetHeader = targetItem.querySelector('.accordion_header');
       const targetBody = targetItem.querySelector('.accordion_body');
+      const targetArrowWrapper = targetItem.querySelector('.arrow-wrapper.is-absolute');
+      const targetArrow = targetArrowWrapper ? targetArrowWrapper.querySelector('.arrow') : null;
+      const targetStarBackground = targetArrowWrapper ? targetArrowWrapper.querySelector('.star-background') : null;
       
       // Kill any existing animations
-      gsap.killTweensOf([targetHeader, targetBody]);
+      gsap.killTweensOf([targetHeader, targetBody, targetArrow, targetStarBackground].filter(Boolean));
       
       // First set header to bottom position (invisible)
       gsap.set(targetHeader, {
@@ -117,6 +142,24 @@ $(document).ready(function() {
         duration: 0.4,
         ease: "power2.in"
       });
+      
+      // Rotate arrow back to 0 degrees
+      if (targetArrow) {
+        gsap.to(targetArrow, {
+          rotation: 0,
+          duration: 0.4,
+          ease: "power2.out"
+        });
+      }
+      
+      // Set star background opacity back to original (assuming 0)
+      if (targetStarBackground) {
+        gsap.to(targetStarBackground, {
+          opacity: 0,
+          duration: 0.4,
+          ease: "power2.out"
+        });
+      }
     }
     
     // Mouse enter
@@ -142,9 +185,12 @@ $(document).ready(function() {
       if (currentlyHovered) {
         const header = currentlyHovered.querySelector('.accordion_header');
         const body = currentlyHovered.querySelector('.accordion_body');
+        const arrowWrapper = currentlyHovered.querySelector('.arrow-wrapper.is-absolute');
+        const arrow = arrowWrapper ? arrowWrapper.querySelector('.arrow') : null;
+        const starBackground = arrowWrapper ? arrowWrapper.querySelector('.star-background') : null;
         
         // Kill any existing animations
-        gsap.killTweensOf([header, body]);
+        gsap.killTweensOf([header, body, arrow, starBackground].filter(Boolean));
         
         // First set header to bottom position (invisible)
         gsap.set(header, {
@@ -168,6 +214,24 @@ $(document).ready(function() {
           duration: 0.7,
           ease: "power2.in"
         });
+        
+        // Rotate arrow back to 0 degrees
+        if (arrow) {
+          gsap.to(arrow, {
+            rotation: 0,
+            duration: 0.7,
+            ease: "power2"
+          });
+        }
+        
+        // Set star background opacity back to 0
+        if (starBackground) {
+          gsap.to(starBackground, {
+            opacity: 0,
+            duration: 0.7,
+            ease: "power2"
+          });
+        }
         
         currentlyHovered = null;
       }

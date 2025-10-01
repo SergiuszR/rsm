@@ -92,7 +92,8 @@
             'js/global/contact-modal.js',
             'js/global/navbar.js',
             'js/global/footer-physics.js',
-            'js/global/utils.js'
+            'js/global/utils.js',
+            'js/global/navbar-anim.js'
         ]);
     }
     
