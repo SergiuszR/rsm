@@ -13,7 +13,7 @@ $(document).ready(function() {
         bottom: 0;
         left: 0;
         width: 100%;
-        height: 1px;
+        height: 2px;
         background-color: black;
         transform: scaleX(var(--blog-line-scale));
         transform-origin: left center;
