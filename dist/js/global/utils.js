@@ -44,7 +44,7 @@ $(document).ready(function() {
 
         slidesPerView: 'auto',
         spaceBetween: 24,
-        loop: true,
+        loop: false,
 
         navigation: {
             nextEl: '.swiper_control.is-next',
@@ -56,7 +56,47 @@ $(document).ready(function() {
         watchOverflow: true,
         observer: true,
         observeParents: true,
+
+        on: {
+            init: function() {
+                updateArrowStates();
+            },
+            slideChange: function() {
+                updateArrowStates();
+            },
+            reachBeginning: function() {
+                updateArrowStates();
+            },
+            reachEnd: function() {
+                updateArrowStates();
+            }
+        }
     });
+
+    function updateArrowStates() {
+        const prevArrow = document.querySelector('.swiper_control.is-prev');
+        const nextArrow = document.querySelector('.swiper_control.is-next');
+        
+        if (prevArrow) {
+            if (swiper.isBeginning) {
+                prevArrow.style.opacity = '0';
+                prevArrow.style.pointerEvents = 'none';
+            } else {
+                prevArrow.style.opacity = '1';
+                prevArrow.style.pointerEvents = 'auto';
+            }
+        }
+        
+        if (nextArrow) {
+            if (swiper.isEnd) {
+                nextArrow.style.opacity = '0';
+                nextArrow.style.pointerEvents = 'none';
+            } else {
+                nextArrow.style.opacity = '1';
+                nextArrow.style.pointerEvents = 'auto';
+            }
+        }
+    }
 
     // Prevent anchors from jumping to top
     document.querySelectorAll('.swiper_control.is-prev, .swiper_control.is-next')
