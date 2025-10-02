@@ -32,19 +32,49 @@ $(document).ready(function() {
     });
 });
 
-/* Swiper */
-
 $(document).ready(function() {
     const container = document.querySelector('.podcasts_wrapper');
     if (!container) return;
 
-    const swiper = new Swiper(container, {
+    let swiper; // Declare swiper variable first
+
+    function updateArrowStates() {
+        // Add safety check
+        if (!swiper) return;
+        
+        const prevArrow = document.querySelector('.swiper_control.is-prev');
+        const nextArrow = document.querySelector('.swiper_control.is-next');
+        
+        if (prevArrow) {
+            if (swiper.isBeginning) {
+                prevArrow.style.opacity = '0';
+                prevArrow.style.pointerEvents = 'none';
+            } else {
+                prevArrow.style.opacity = '1';
+                prevArrow.style.pointerEvents = 'auto';
+            }
+        }
+        
+        if (nextArrow) {
+            if (swiper.isEnd) {
+                nextArrow.style.opacity = '0';
+                nextArrow.style.pointerEvents = 'none';
+            } else {
+                nextArrow.style.opacity = '1';
+                nextArrow.style.pointerEvents = 'auto';
+            }
+        }
+    }
+
+    // Now initialize swiper
+    swiper = new Swiper(container, {
         wrapperClass: 'showcase_grid',
         slideClass: 'showcase_item-outer',
 
         slidesPerView: 'auto',
         spaceBetween: 24,
         loop: false,
+        initialSlide: 0,
 
         navigation: {
             nextEl: '.swiper_control.is-next',
@@ -73,36 +103,17 @@ $(document).ready(function() {
         }
     });
 
-    function updateArrowStates() {
-        const prevArrow = document.querySelector('.swiper_control.is-prev');
-        const nextArrow = document.querySelector('.swiper_control.is-next');
-        
-        if (prevArrow) {
-            if (swiper.isBeginning) {
-                prevArrow.style.opacity = '0';
-                prevArrow.style.pointerEvents = 'none';
-            } else {
-                prevArrow.style.opacity = '1';
-                prevArrow.style.pointerEvents = 'auto';
-            }
-        }
-        
-        if (nextArrow) {
-            if (swiper.isEnd) {
-                nextArrow.style.opacity = '0';
-                nextArrow.style.pointerEvents = 'none';
-            } else {
-                nextArrow.style.opacity = '1';
-                nextArrow.style.pointerEvents = 'auto';
-            }
-        }
-    }
-
     // Prevent anchors from jumping to top
     document.querySelectorAll('.swiper_control.is-prev, .swiper_control.is-next')
         .forEach(a => a.addEventListener('click', e => e.preventDefault()));
 
-    const update = () => swiper.update();
+    const update = () => {
+        if (swiper) {
+            swiper.update();
+            updateArrowStates();
+        }
+    };
+    
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(update);
     window.addEventListener('load', update, { once: true });
     setTimeout(update, 200);
