@@ -5,7 +5,7 @@ $(document).ready(function() {
     if (!container || cards.length === 0) return;
     
     const stackGap = 20;
-    const topEdge = 150;
+    const topEdge = 50;
     const reverseEffect = true;
     const viewportHeight = window.innerHeight;
     
