@@ -1,6 +1,10 @@
 // On Reveal
 
 $(document).ready(function() {
+  // Only run on desktop (>= 992px)
+  if (!window.matchMedia('(min-width: 992px)').matches) {
+    return;
+  }
   
   gsap.registerPlugin(ScrollTrigger);
   
@@ -36,6 +40,10 @@ $(document).ready(function() {
 
 // Wait for DOM to be fully loaded
 $(document).ready(function() {
+  // Only run on desktop (>= 992px)
+  if (!window.matchMedia('(min-width: 992px)').matches) {
+    return;
+  }
   
   // Initialize GSAP
   gsap.registerPlugin();
