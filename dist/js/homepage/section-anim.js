@@ -69,7 +69,7 @@
         onEnter: () => tl.play()
     });
 
-    gsap.registerPlugin(ScrollTrigger);
+// Benefits animation
 
   const items = document.querySelectorAll(".layout_item");
   
