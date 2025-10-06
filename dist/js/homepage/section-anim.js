@@ -68,4 +68,25 @@
         once: true,
         onEnter: () => tl.play()
     });
+
+    gsap.registerPlugin(ScrollTrigger);
+
+  const items = document.querySelectorAll(".layout_item");
+  
+  gsap.set(items, { opacity: 0, x: -100 });
+
+  ScrollTrigger.create({
+    trigger: "#benefits",
+    start: "top 80%",
+    onEnter: () => {
+      gsap.to(items, {
+        opacity: 1,
+        x: 0,
+        duration: 0.8,
+        stagger: 0.4,
+        ease: "power2.out"
+      });
+    },
+    once: true
+  });
 })();
