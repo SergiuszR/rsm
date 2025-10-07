@@ -329,7 +329,7 @@ $(document).ready(function() {
       $cards.addClass('swiper-slide');
 
       new Swiper(containerEl, {
-        slidesPerView: 1.2,
+        slidesPerView: window.innerWidth <= 768 ? 1.1 : 1.2,
         spaceBetween: 16,
         centeredSlides: false,
         loop: false,
@@ -345,7 +345,7 @@ $(document).ready(function() {
       new Swiper(containerEl, {
         wrapperClass: 'testimonials_list-wrapper',
         slideClass: 'testimonials_item',
-        slidesPerView: 1.2,
+        slidesPerView: window.innerWidth <= 768 ? 1.1 : 1.2,
         spaceBetween: 16,
         centeredSlides: false,
         loop: false,

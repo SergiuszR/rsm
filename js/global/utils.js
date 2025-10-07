@@ -76,6 +76,11 @@ $(document).ready(function() {
         loop: false,
         initialSlide: 0,
 
+        breakpoints: {
+            0: { slidesPerView: 1.1 },
+            769: { slidesPerView: 'auto' }
+        },
+
         navigation: {
             nextEl: '.swiper_control.is-next',
             prevEl: '.swiper_control.is-prev',
