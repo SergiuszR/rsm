@@ -31,3 +31,14 @@ $(document).ready(function() {
         });
     }
 });
+
+document.addEventListener('click', (e) => {
+	if (e.target.closest('.w-nav-button'))
+		setTimeout(
+			() =>
+				(document.body.style.overflow = document.querySelector('.w--open')
+					? 'hidden'
+					: ''),
+			50
+		);
+});
