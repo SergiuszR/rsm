@@ -72,7 +72,8 @@
                     'js/homepage/blog-anim.js',
                     'js/homepage/youtube.js',
                     'js/homepage/section-anim.js',
-                    'js/homepage/marquee.js'
+                    'js/homepage/marquee.js',
+                    'js/homepage/video.js'
                 ]
             };
             
