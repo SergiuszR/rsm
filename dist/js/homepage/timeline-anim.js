@@ -1,4 +1,8 @@
 $(document).ready(function() {
+    const BREAKPOINT_TABLET = 991;
+    if (window.innerWidth <= BREAKPOINT_TABLET) {
+        return;
+    }
     gsap.registerPlugin(ScrollTrigger);
     
     const $timelineComponent = $('.timeline_component');
