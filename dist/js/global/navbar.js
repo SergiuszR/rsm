@@ -32,5 +32,3 @@ $(document).ready(function () {
     }
 });
 
-document.addEventListener('click', e => { if (e.target.closest('.w-nav-button')) setTimeout(() => { const isOpen = document.querySelector('.w--open'); document.documentElement.style.overflow = isOpen ? 'hidden' : ''; document.body.style.overflow = isOpen ? 'hidden' : ''; }, 50); });
-
