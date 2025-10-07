@@ -123,3 +123,27 @@ $(document).ready(function() {
     window.addEventListener('load', update, { once: true });
     setTimeout(update, 200);
 });
+
+
+// Storage Video
+
+$(document).ready(function() {
+    const targets = document.querySelectorAll('[data-video-1]');
+    if (targets.length === 0) return;
+  
+    fetch('/storage')
+      .then(response => response.text())
+      .then(html => {
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        const video = doc.getElementById('video-1');
+        
+        if (video) {
+          targets.forEach(target => {
+            const clone = video.cloneNode(true);
+            target.appendChild(clone);
+          });
+        }
+      })
+      .catch(err => console.error('Error:', err));
+  });
+  
