@@ -3,6 +3,7 @@ $(document).ready(function() {
 const wrapper = document.querySelector('.banner_wrapper');
 const firstInner = wrapper.querySelector('.banner_wrapper-inner');
 const marqueeWidth = firstInner.querySelector('.banner_marquee').scrollWidth;
+const threshold = 200;
 
 gsap.to(wrapper, {
   x: -marqueeWidth,
@@ -19,7 +20,7 @@ if (window.innerWidth > 991) {
   const section = document.querySelector('.section_reels');
   
   gsap.to('.left_videos_wrapper', {
-    y: -800,
+    y: -threshold,
     ease: "none",
     scrollTrigger: {
       trigger: section,
@@ -30,7 +31,7 @@ if (window.innerWidth > 991) {
   });
   
   gsap.to('.middle_left_videos_wrapper, .middle_right_videos_wrapper', {
-    y: 800,
+    y: threshold,
     ease: "none",
     scrollTrigger: {
       trigger: section,
@@ -41,7 +42,7 @@ if (window.innerWidth > 991) {
   });
   
   gsap.to('.right_videos_wrapper', {
-    y: -800,
+    y: -threshold,
     ease: "none",
     scrollTrigger: {
       trigger: section,
