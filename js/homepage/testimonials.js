@@ -365,6 +365,7 @@ $(document).ready(function() {
       });
     }
   }
+  }  // Close initTestimonials function
   
   // Initialize when GSAP is ready using AnimationManager
   if (window.AnimationManager) {
@@ -373,7 +374,7 @@ $(document).ready(function() {
     console.error('AnimationManager not loaded for testimonials');
   }
 
-    function initReelsAnimation() {
+  function initReelsAnimation() {
       if (!window.gsap || !window.ScrollTrigger) {
         console.warn('GSAP or ScrollTrigger not loaded for reels animation');
         return;
@@ -447,4 +448,5 @@ $(document).ready(function() {
     } else {
         console.error('AnimationManager not loaded for reels animation');
     }
+
 });
