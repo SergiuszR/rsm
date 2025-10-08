@@ -5,6 +5,44 @@
 
 (function() {
     'use strict';
+
+	// Early: neutralize YouTube iframes before they can load and set cookies
+	(function neutralizeYouTubeIframesEarly() {
+		function sanitizeIframe(iframe) {
+			try {
+				if (!iframe || iframe.dataset.ytSanitized) return;
+				var src = iframe.getAttribute('src') || '';
+				if (!/youtube\.com\//i.test(src) && !/youtu\.be\//i.test(src)) return;
+				iframe.setAttribute('data-yt-src', src);
+				iframe.removeAttribute('src');
+				iframe.setAttribute('data-yt-sanitized', '');
+			} catch (e) {}
+		}
+
+		function scan(root) {
+			try {
+				var nodes = (root || document).querySelectorAll('.video_container iframe');
+				for (var i = 0; i < nodes.length; i++) sanitizeIframe(nodes[i]);
+			} catch (e) {}
+		}
+
+		// Run immediately for already parsed content
+		scan(document);
+
+		// Observe future additions during parsing
+		try {
+			var mo = new MutationObserver(function(muts) {
+				for (var i = 0; i < muts.length; i++) {
+					var m = muts[i];
+					for (var j = 0; j < m.addedNodes.length; j++) {
+						var node = m.addedNodes[j];
+						if (node && node.nodeType === 1) scan(node);
+					}
+				}
+			});
+			mo.observe(document.documentElement || document, { subtree: true, childList: true });
+		} catch (e) {}
+	})();
     
     // Determine which Netlify branch (or custom base) to load scripts from
     function getBaseURL() {
