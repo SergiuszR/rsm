@@ -6,6 +6,14 @@
 (function() {
     'use strict';
 
+	// If the page used a tiny inline stub before this loader (recommended when using defer/async),
+	// keep references so we can flush any queued calls and callbacks once RSM becomes available.
+	// Supported stubs:
+	// - window.RSM with { _q: [{ method, args }], _readyCallbacks: [fn] }
+	// - window.RSMQueue as an array of functions: fn(RSM)
+	var __preRSM = window.RSM;
+	var __preQueue = window.RSMQueue;
+
 	// Early: neutralize YouTube iframes before they can load and set cookies
 	(function neutralizeYouTubeIframesEarly() {
 		function sanitizeIframe(iframe) {
@@ -44,7 +52,7 @@
 		} catch (e) {}
 	})();
     
-    // Determine which Netlify branch (or custom base) to load scripts from
+    // Determine which Netlify npm (or custom base) to load scripts from
     function getBaseURL() {
         // Highest priority: explicit base override
         // URL param: ?rsm-base=https://my-host.example.com
@@ -111,6 +119,39 @@
     window.RSM = {
         baseURL: getBaseURL(),
         loaded: new Set(),
+        _ready: false,
+        _readyCallbacks: [],
+
+        // Allow consumers to wait for RSM even if this script is loaded with defer/async
+        onReady: function(callback) {
+            if (!callback) return;
+            if (this._ready) {
+                try { callback(); } catch (e) {}
+                return;
+            }
+            this._readyCallbacks.push(callback);
+        },
+
+        // Internal: mark ready and notify listeners
+        _emitReady: function() {
+            if (this._ready) return;
+            this._ready = true;
+            // Fire DOM event for non-stub usage
+            try {
+                var evt = (typeof Event === 'function') ? new Event('rsm:ready') : (function(){
+                    var ev = document.createEvent('Event');
+                    ev.initEvent('rsm:ready', true, true);
+                    return ev;
+                })();
+                window.dispatchEvent(evt);
+            } catch (e) {}
+            // Drain callbacks registered via onReady
+            var cbs = this._readyCallbacks.slice();
+            this._readyCallbacks.length = 0;
+            for (var i = 0; i < cbs.length; i++) {
+                try { cbs[i](); } catch (e) {}
+            }
+        },
         
         // Load a single script
         loadScript: function(src, callback) {
@@ -187,6 +228,42 @@
             this.loadScripts(pageScripts, callback);
         }
     };
+
+	// Flush any calls queued by an early stub and advertise readiness
+	(function flushEarlyAndSignalReady() {
+		try {
+			// 1) Support stubs that queued method calls: { method, args }
+			var q = __preRSM && (__preRSM._q || __preRSM._queue || __preRSM.queue);
+			if (q && q.length) {
+				for (var i = 0; i < q.length; i++) {
+					var item = q[i] || {};
+					var name = item.method || item.fn || item[0];
+					var args = item.args || item[1] || [];
+					try {
+						if (name && typeof window.RSM[name] === 'function') {
+							window.RSM[name].apply(window.RSM, Array.isArray(args) ? args : [args]);
+						}
+					} catch (e) {}
+				}
+			}
+			// 2) Support stubs that queued callbacks as functions: fn(RSM)
+			if (Array.isArray(__preQueue) && __preQueue.length) {
+				for (var j = 0; j < __preQueue.length; j++) {
+					try { __preQueue[j](window.RSM); } catch (e) {}
+				}
+				__preQueue.length = 0;
+			}
+			// 3) Drain any ready callbacks put on the stub
+			var rc = __preRSM && (__preRSM._readyCallbacks || __preRSM._rc);
+			if (rc && rc.length) {
+				for (var k = 0; k < rc.length; k++) {
+					try { rc[k](); } catch (e) {}
+				}
+			}
+		} catch (e) {}
+		// Finally, broadcast readiness so consumers using addEventListener('rsm:ready') are notified
+		window.RSM._emitReady();
+	})();
     
     // Auto-load global scripts when DOM is ready
     function initGlobalScripts() {
