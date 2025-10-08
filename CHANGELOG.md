@@ -1,11 +1,13 @@
 # Changelog - Development Branch
 
-## Performance and Animation Fixes
+## Performance and Animation Fixes (v2 - Critical Fix)
 
 ### Date: October 8, 2025
 
 ### Overview
 Fixed critical performance issues with video loading and scroll-triggered animations not firing consistently.
+
+**UPDATE v2:** Replaced unreliable `setTimeout` approach with proper `AnimationManager.onReady()` callbacks. This fixes issues where animations (timeline, services, navbar) weren't initializing correctly.
 
 ---
 
@@ -52,20 +54,28 @@ A centralized system that:
 - ✅ Includes error handling for failed animations
 
 #### Updated All Animation Files
-Added proper initialization checks and delays to:
+Added proper initialization using AnimationManager to:
 - `section-anim.js` - Hero section typing animation
 - `services-anim.js` - Services accordion reveal and hover effects
 - `timeline-anim.js` - Timeline progress animation
 - `blog-anim.js` - Blog items fade-in animation
 - `testimonials.js` - Testimonials cards and reels section
 - `marquee.js` - Banner marquee and video parallax effects
+- `navbar.js` - Navbar hide/show on scroll
+- `navbar-anim.js` - Navbar contrast switching
+- `footer-physics.js` - Footer physics animation
 
 Each file now:
 1. Wraps animations in initialization functions
 2. Checks for GSAP/ScrollTrigger availability
-3. Waits 100ms before initializing to ensure libraries are loaded
+3. **Uses `AnimationManager.onReady()` callback** (v2 fix - replaces setTimeout)
 4. Logs warnings if dependencies are missing
 5. Only kills relevant ScrollTriggers (not all of them)
+
+**v2 Changes:**
+- Replaced all `setTimeout(initAnimation, 100)` with `AnimationManager.onReady(initAnimation)`
+- This ensures animations wait for GSAP to actually load, not just hope 100ms is enough
+- Fixes race conditions that caused animations to fail intermittently
 
 ---
 
@@ -106,16 +116,21 @@ Each file now:
 4. Animation fails silently or fires incorrectly
 ```
 
-### Animation Initialization Flow (After)
+### Animation Initialization Flow (After v2)
 ```
 1. anim-init.js loads first
-2. AnimationManager starts checking for GSAP
+2. AnimationManager starts checking for GSAP (with retry)
 3. Animation scripts load
-4. Each animation waits 100ms
-5. Checks if GSAP/ScrollTrigger exist
-6. Initializes animation safely
-7. AnimationManager refreshes ScrollTrigger after content loads
+4. Each animation registers callback: AnimationManager.onReady(initAnimation)
+5. AnimationManager confirms GSAP/ScrollTrigger loaded
+6. AnimationManager triggers all registered callbacks
+7. Animations initialize safely
+8. AnimationManager refreshes ScrollTrigger after content loads
 ```
+
+**Why v2 is better:**
+- ❌ v1: `setTimeout(100)` - hope GSAP loads in 100ms (unreliable)
+- ✅ v2: `AnimationManager.onReady()` - wait for actual confirmation (guaranteed)
 
 ---
 
@@ -124,14 +139,17 @@ Each file now:
 ### New Files
 - ✨ `js/global/anim-init.js` - Animation manager system
 
-### Updated Files
+### Updated Files (v2)
 - 📝 `js/homepage/video.js` - Progressive loading with Intersection Observer
-- 📝 `js/homepage/section-anim.js` - Initialization checks
-- 📝 `js/homepage/services-anim.js` - Initialization checks
-- 📝 `js/homepage/timeline-anim.js` - Initialization checks
-- 📝 `js/homepage/blog-anim.js` - Initialization checks
-- 📝 `js/homepage/testimonials.js` - Initialization checks
-- 📝 `js/homepage/marquee.js` - Initialization checks
+- 📝 `js/homepage/section-anim.js` - AnimationManager.onReady()
+- 📝 `js/homepage/services-anim.js` - AnimationManager.onReady()
+- 📝 `js/homepage/timeline-anim.js` - AnimationManager.onReady()
+- 📝 `js/homepage/blog-anim.js` - AnimationManager.onReady()
+- 📝 `js/homepage/testimonials.js` - AnimationManager.onReady()
+- 📝 `js/homepage/marquee.js` - AnimationManager.onReady()
+- 📝 `js/global/navbar.js` - AnimationManager.onReady() (v2 fix)
+- 📝 `js/global/navbar-anim.js` - AnimationManager.onReady() (v2 fix)
+- 📝 `js/global/footer-physics.js` - AnimationManager.onReady() (v2 fix)
 - 📝 `rsm-loader.js` - Added anim-init.js to global scripts
 
 ### Dist Folder

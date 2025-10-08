@@ -1,11 +1,16 @@
 $(document).ready(function () {
-  gsap.registerPlugin(ScrollTrigger);
+  // Wait for GSAP and ScrollTrigger to be ready
+  if (!window.AnimationManager) {
+    console.error('AnimationManager not loaded for footer-physics');
+    return;
+  }
 
   let physicsInstances = new Map(); // Track multiple physics instances
 
-  setTimeout(() => {
+  window.AnimationManager.onReady(function() {
+    gsap.registerPlugin(ScrollTrigger);
     initScrollTrigger();
-  }, 100);
+  });
 
   function initScrollTrigger() {
     const physicsElements = document.querySelectorAll('[data-physics]');

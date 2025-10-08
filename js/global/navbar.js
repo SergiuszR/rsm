@@ -1,10 +1,17 @@
 $(document).ready(function () {
-    gsap.registerPlugin(ScrollTrigger);
+    // Wait for GSAP and ScrollTrigger to be ready
+    if (!window.AnimationManager) {
+        console.error('AnimationManager not loaded for navbar');
+        return;
+    }
+    
+    window.AnimationManager.onReady(function() {
+        gsap.registerPlugin(ScrollTrigger);
 
-    const $navbar = $('[data-element="navbar"]');
-    const $banner = $('[data-element="banner"]');
+        const $navbar = $('[data-element="navbar"]');
+        const $banner = $('[data-element="banner"]');
 
-    if ($navbar.length > 0) {
+        if ($navbar.length > 0) {
         let lastY = 0;
         const threshold = 5;
 
@@ -35,6 +42,7 @@ $(document).ready(function () {
                 }
             }
         });
-    }
+        }
+    });
 });
 

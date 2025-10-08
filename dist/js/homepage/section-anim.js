@@ -164,13 +164,10 @@
   });
     }
     
-    // Initialize when DOM and GSAP are ready
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => {
-            // Give GSAP time to load
-            setTimeout(initAnimation, 100);
-        });
+    // Initialize when GSAP is ready using AnimationManager
+    if (window.AnimationManager) {
+        window.AnimationManager.onReady(initAnimation);
     } else {
-        setTimeout(initAnimation, 100);
+        console.error('AnimationManager not loaded for section-anim');
     }
 })();

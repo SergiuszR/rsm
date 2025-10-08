@@ -1,5 +1,13 @@
 $(document).ready(function() {
-const navbar = document.querySelector('.navbar_component');
+    // Wait for GSAP and ScrollTrigger to be ready
+    if (!window.AnimationManager) {
+        console.error('AnimationManager not loaded for navbar-anim');
+        return;
+    }
+    
+    window.AnimationManager.onReady(function() {
+        const navbar = document.querySelector('.navbar_component');
+        if (!navbar) return;
 
 // Auto-detect potential sections with more comprehensive selectors
 const sectionSelectors = [
@@ -126,6 +134,7 @@ ScrollTrigger.create({
   onRefresh: updateNavbarContrast
 });
 
-// Initial setup
-    updateNavbarContrast();
+        // Initial setup
+        updateNavbarContrast();
+    });
 });

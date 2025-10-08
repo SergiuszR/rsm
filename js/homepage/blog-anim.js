@@ -64,7 +64,11 @@ $(document).ready(function() {
         });
     }
     
-    // Initialize with delay to ensure GSAP is loaded
-    setTimeout(initBlogAnimation, 100);
+    // Initialize when GSAP is ready using AnimationManager
+    if (window.AnimationManager) {
+        window.AnimationManager.onReady(initBlogAnimation);
+    } else {
+        console.error('AnimationManager not loaded for blog-anim');
+    }
   });
   

@@ -73,6 +73,10 @@ $(document).ready(function() {
     }
   }
   
-  // Initialize with delay to ensure GSAP is loaded
-  setTimeout(initMarqueeAnimation, 100);
+  // Initialize when GSAP is ready using AnimationManager
+  if (window.AnimationManager) {
+    window.AnimationManager.onReady(initMarqueeAnimation);
+  } else {
+    console.error('AnimationManager not loaded for marquee');
+  }
 })

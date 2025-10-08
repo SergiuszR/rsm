@@ -41,8 +41,12 @@ $(document).ready(function() {
   );
   }
   
-  // Initialize with delay to ensure GSAP is loaded
-  setTimeout(initServicesReveal, 100);
+  // Initialize when GSAP is ready using AnimationManager
+  if (window.AnimationManager) {
+    window.AnimationManager.onReady(initServicesReveal);
+  } else {
+    console.error('AnimationManager not loaded for services-anim reveal');
+  }
 });
 
 

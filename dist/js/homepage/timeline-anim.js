@@ -149,6 +149,10 @@ $(document).ready(function() {
     });
     }
     
-    // Initialize with delay to ensure GSAP is loaded
-    setTimeout(initTimelineAnimation, 100);
+    // Initialize when GSAP is ready using AnimationManager
+    if (window.AnimationManager) {
+        window.AnimationManager.onReady(initTimelineAnimation);
+    } else {
+        console.error('AnimationManager not loaded for timeline-anim');
+    }
 });

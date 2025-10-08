@@ -366,8 +366,12 @@ $(document).ready(function() {
     }
   }
   
-  // Initialize with delay to ensure GSAP is loaded
-  setTimeout(initTestimonials, 100);
+  // Initialize when GSAP is ready using AnimationManager
+  if (window.AnimationManager) {
+    window.AnimationManager.onReady(initTestimonials);
+  } else {
+    console.error('AnimationManager not loaded for testimonials');
+  }
 
     function initReelsAnimation() {
       if (!window.gsap || !window.ScrollTrigger) {
@@ -437,6 +441,10 @@ $(document).ready(function() {
     })
     }
     
-    // Initialize reels animation with delay
-    setTimeout(initReelsAnimation, 100);
+    // Initialize when GSAP is ready using AnimationManager
+    if (window.AnimationManager) {
+        window.AnimationManager.onReady(initReelsAnimation);
+    } else {
+        console.error('AnimationManager not loaded for reels animation');
+    }
 });
