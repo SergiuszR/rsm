@@ -29,10 +29,16 @@ $(document).ready(function () {
         return;
       }
       
-      // Always use 50% threshold
-      const triggerValue = 50;
+      // Hide all icons initially to prevent flash of unstyled content
+      const icons = wrapper.querySelectorAll('.physics_icon');
+      icons.forEach(icon => {
+        icon.style.opacity = '0';
+        icon.style.visibility = 'hidden';
+      });
       
-      console.log(`Physics element ${index}: using fixed 50% visibility threshold`);
+      // Start physics earlier for smoother experience
+      const triggerValue = 20; // Start when element is 20% visible
+      
       
       const instanceId = `physics-${index}`;
       
@@ -41,10 +47,9 @@ $(document).ready(function () {
         start: "top bottom",
         end: "bottom top",
         onUpdate: (self) => {
-          // Check if element has reached 50% visibility
+          // Check if element has reached threshold
           const visibility = Math.round(self.progress * 100);
           if (visibility >= triggerValue && !physicsInstances.has(instanceId)) {
-            console.log(`Triggering physics for element ${index} at ${visibility}% visibility`);
             const instance = initPhysics(wrapper);
             if (instance) {
               dropIcons(wrapper, instance);
@@ -132,6 +137,7 @@ $(document).ready(function () {
       
       icon.style.left = `${randomX}px`;
       icon.style.top = `${-100 - (index * 50)}px`;
+      icon.style.visibility = 'visible'; // Make visible before animating
       
       const body = Matter.Bodies.rectangle(
         randomX + icon.offsetWidth / 2,
@@ -149,6 +155,14 @@ $(document).ready(function () {
       instance.bodies.push({ element: icon, body: body });
       Matter.World.add(instance.world, body);
       addImprovedDragInteraction(icon, body, wrapper, instance);
+      
+      // Smooth fade-in animation with stagger
+      gsap.to(icon, {
+        opacity: 1,
+        duration: 0.6,
+        delay: index * 0.1, // Stagger effect
+        ease: "power2.out"
+      });
     });
     
     // Animation loop for this specific instance
