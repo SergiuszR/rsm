@@ -13,34 +13,96 @@
 
     ScrollTrigger.getAll().forEach(t => t.kill());
 
-    const toHTML = toEl.innerHTML;
+    const fromText = fromEl.textContent;
+    const toText = toEl.textContent;
     
     gsap.set(toEl, { display: "none" });
     gsap.set(boxBottom, { opacity: 0, y: 20 });
     gsap.set(decorImages, { opacity: 0, y: -30, clearProps: "transition" });
 
+    // Add cursor element
+    const cursor = document.createElement("span");
+    cursor.style.cssText = "border-right: 2px solid currentColor; padding-right: 2px; animation: blink 0.7s infinite;";
+    
+    // Add blink animation if not exists
+    if (!document.querySelector("#cursor-blink-style")) {
+        const style = document.createElement("style");
+        style.id = "cursor-blink-style";
+        style.textContent = "@keyframes blink { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0; } }";
+        document.head.appendChild(style);
+    }
+
     const tl = gsap.timeline({
         paused: true,
-        defaults: { ease: "power2.inOut" }
+        defaults: { ease: "none" }
     });
 
-    tl.to({}, { duration: 0.65 })
-      .to(fromEl, {
-          duration: 0.4,
-          scale: 0.95,
-          opacity: 0,
-          filter: "blur(8px)",
-          onComplete: () => {
-              fromEl.innerHTML = toHTML;
-          }
-      })
-      .to(fromEl, {
-          duration: 0.4,
-          scale: 1,
-          opacity: 1,
-          filter: "blur(0px)"
-      })
-      .to(boxBottom, { duration: 0.6, opacity: 1, y: 0, ease: "power2.out" }, "-=0.3")
+    // Initial delay
+    tl.to({}, { duration: 1.5 });
+
+    // Phase 1: Erase the original text letter by letter
+    for (let i = fromText.length; i >= 0; i--) {
+        tl.call(() => {
+            fromEl.textContent = fromText.substring(0, i);
+            fromEl.appendChild(cursor);
+        });
+        tl.to({}, { duration: 0.05 });
+    }
+
+    // Small pause after erasing
+    tl.to({}, { duration: 0.5 });
+
+    // Phase 2: Type new text with a typo in the last word
+    const lastSpaceIndex = toText.lastIndexOf(" ");
+    const lastWordStart = lastSpaceIndex !== -1 ? lastSpaceIndex + 1 : 0;
+    const typoPosition = lastWordStart + Math.floor((toText.length - lastWordStart) * 0.5); // Typo in middle of last word
+    const typoChar = "x"; // The typo character
+    
+    // Type until typo position
+    for (let i = 1; i <= typoPosition; i++) {
+        tl.call(() => {
+            fromEl.textContent = toText.substring(0, i);
+            fromEl.appendChild(cursor);
+        });
+        tl.to({}, { duration: 0.08 });
+    }
+
+    // Add the typo character
+    tl.call(() => {
+        fromEl.textContent = toText.substring(0, typoPosition) + typoChar;
+        fromEl.appendChild(cursor);
+    });
+    tl.to({}, { duration: 0.08 });
+
+    // Pause (realize the mistake)
+    tl.to({}, { duration: 0.6 });
+
+    // Backspace the typo
+    tl.call(() => {
+        fromEl.textContent = toText.substring(0, typoPosition);
+        fromEl.appendChild(cursor);
+    });
+    tl.to({}, { duration: 0.08 });
+
+    // Small pause before continuing
+    tl.to({}, { duration: 0.3 });
+
+    // Continue typing correctly
+    for (let i = typoPosition + 1; i <= toText.length; i++) {
+        tl.call(() => {
+            fromEl.textContent = toText.substring(0, i);
+            fromEl.appendChild(cursor);
+        });
+        tl.to({}, { duration: 0.08 });
+    }
+
+    // Remove cursor and show rest of content
+    tl.call(() => {
+        fromEl.innerHTML = toEl.innerHTML;
+    });
+
+    // Animate bottom box and decor images
+    tl.to(boxBottom, { duration: 0.6, opacity: 1, y: 0, ease: "power2.out" }, "-=0.3")
       .to(decorImages, {
           duration: 0.5,
           opacity: 1,
