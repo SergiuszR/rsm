@@ -1,17 +1,28 @@
 (function () {
-    if (!window.gsap) return;
-    gsap.registerPlugin(ScrollTrigger);
+    // Wait for GSAP and ScrollTrigger to be ready
+    function initAnimation() {
+        if (!window.gsap || !window.ScrollTrigger) {
+            console.warn('GSAP or ScrollTrigger not loaded for section-anim');
+            return;
+        }
+        
+        gsap.registerPlugin(ScrollTrigger);
 
-    const header    = document.getElementById("transition-header");
-    const boxTop    = document.getElementById("box-top");
-    const fromEl    = document.getElementById("from-animate");
-    const toEl      = document.getElementById("to-animate");
-    const boxBottom = document.getElementById("box-bottom");
-    const decorImages = document.querySelectorAll(".s-decor-image-wrapper");
+        const header    = document.getElementById("transition-header");
+        const boxTop    = document.getElementById("box-top");
+        const fromEl    = document.getElementById("from-animate");
+        const toEl      = document.getElementById("to-animate");
+        const boxBottom = document.getElementById("box-bottom");
+        const decorImages = document.querySelectorAll(".s-decor-image-wrapper");
 
-    if (!header || !boxTop || !fromEl || !toEl || !boxBottom) return;
+        if (!header || !boxTop || !fromEl || !toEl || !boxBottom) return;
 
-    ScrollTrigger.getAll().forEach(t => t.kill());
+        // Clean up any existing ScrollTriggers for this section only
+        ScrollTrigger.getAll().forEach(t => {
+            if (t.trigger === header || t.vars.trigger === '#benefits') {
+                t.kill();
+            }
+        });
 
     const fromText = fromEl.textContent;
     const toText = toEl.textContent;
@@ -151,4 +162,15 @@
     },
     once: true
   });
+    }
+    
+    // Initialize when DOM and GSAP are ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+            // Give GSAP time to load
+            setTimeout(initAnimation, 100);
+        });
+    } else {
+        setTimeout(initAnimation, 100);
+    }
 })();

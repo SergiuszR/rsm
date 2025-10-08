@@ -90,6 +90,7 @@
     // Auto-load global scripts when DOM is ready
     function initGlobalScripts() {
         window.RSM.loadScripts([
+            'js/global/anim-init.js',
             'js/global/footer.js',
             'js/global/lenis.js',
             'js/global/contact-modal.js',

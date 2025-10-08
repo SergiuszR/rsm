@@ -3,18 +3,26 @@ $(document).ready(function() {
     if (window.innerWidth <= BREAKPOINT_TABLET) {
         return;
     }
-    gsap.registerPlugin(ScrollTrigger);
     
-    const $timelineComponent = $('.timeline_component');
-    const $progressLine = $('[data-animation="timeline-progress"]');
-    const $timelineRows = $('.timeline_row');
-    const $timelineDot = $('.timeline_dot');
-    const $circleWrappers = $('.timeline_circle-wrapper');
-    
-    if ($timelineComponent.length === 0 || $progressLine.length === 0) {
-        console.warn('Timeline elements not found');
-        return;
-    }
+    // Wait for GSAP and ScrollTrigger
+    function initTimelineAnimation() {
+        if (!window.gsap || !window.ScrollTrigger) {
+            console.warn('GSAP or ScrollTrigger not loaded for timeline-anim');
+            return;
+        }
+        
+        gsap.registerPlugin(ScrollTrigger);
+        
+        const $timelineComponent = $('.timeline_component');
+        const $progressLine = $('[data-animation="timeline-progress"]');
+        const $timelineRows = $('.timeline_row');
+        const $timelineDot = $('.timeline_dot');
+        const $circleWrappers = $('.timeline_circle-wrapper');
+        
+        if ($timelineComponent.length === 0 || $progressLine.length === 0) {
+            console.warn('Timeline elements not found');
+            return;
+        }
     
     // Set initial states
     gsap.set($progressLine[0], { height: '0%' });
@@ -139,4 +147,8 @@ $(document).ready(function() {
         // Update ScrollTrigger positions
         ScrollTrigger.refresh();
     });
+    }
+    
+    // Initialize with delay to ensure GSAP is loaded
+    setTimeout(initTimelineAnimation, 100);
 });

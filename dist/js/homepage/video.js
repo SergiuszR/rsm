@@ -22,10 +22,10 @@ $(document).ready(function() {
     const targets = document.querySelectorAll('[data-video-r]');
     if (targets.length === 0) return;
   
-    // Create all video elements and wait for them to be ready
-    const videoPromises = [];
-    const videos = [];
+    let videosLoaded = 0;
+    const totalVideos = targets.length;
   
+    // Load videos progressively - insert each as soon as it's ready
     targets.forEach((target, index) => {
       const videoUrl = videoUrls[index % videoUrls.length];
       
@@ -37,7 +37,7 @@ $(document).ready(function() {
       video.playsInline = true;
       video.controls = false;
       video.autoplay = true;
-      video.preload = 'auto';
+      video.preload = 'metadata'; // Changed from 'auto' to load faster
       
       // Create source element
       const source = document.createElement('source');
@@ -45,23 +45,53 @@ $(document).ready(function() {
       source.type = 'video/mp4';
       
       video.appendChild(source);
-      videos.push({ video, target });
       
-      // Create promise for video ready state
-      const promise = new Promise((resolve) => {
-        video.addEventListener('canplaythrough', resolve, { once: true });
+      // Insert immediately with a placeholder state
+      target.innerHTML = '';
+      target.appendChild(video);
+      
+      // Start loading in background
+      const loadVideo = () => {
         video.load();
-      });
+        
+        // Try to play when enough data is available
+        const tryPlay = () => {
+          video.play().catch(() => {
+            // Silently handle autoplay restrictions
+          });
+        };
+        
+        video.addEventListener('loadeddata', tryPlay, { once: true });
+        video.addEventListener('canplay', () => {
+          videosLoaded++;
+          
+          // Refresh ScrollTrigger when all videos are loaded (non-blocking)
+          if (videosLoaded === totalVideos && window.ScrollTrigger) {
+            requestAnimationFrame(() => {
+              ScrollTrigger.refresh();
+            });
+          }
+        }, { once: true });
+      };
       
-      videoPromises.push(promise);
-    });
-  
-    // Wait for all videos to be ready, then insert them
-    Promise.all(videoPromises).then(() => {
-      videos.forEach(({ video, target }) => {
-        target.innerHTML = '';
-        target.appendChild(video);
-      });
+      // Use Intersection Observer to load videos only when near viewport
+      if ('IntersectionObserver' in window) {
+        const observer = new IntersectionObserver((entries) => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              loadVideo();
+              observer.unobserve(entry.target);
+            }
+          });
+        }, {
+          rootMargin: '200px' // Start loading 200px before video enters viewport
+        });
+        
+        observer.observe(target);
+      } else {
+        // Fallback for browsers without IntersectionObserver
+        loadVideo();
+      }
     });
   });
   
