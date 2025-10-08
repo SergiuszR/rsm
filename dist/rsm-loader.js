@@ -6,8 +6,22 @@
 (function() {
     'use strict';
     
-    // Determine which Netlify branch to load scripts from
+    // Determine which Netlify branch (or custom base) to load scripts from
     function getBaseURL() {
+        // Highest priority: explicit base override
+        // URL param: ?rsm-base=https://my-host.example.com
+        try {
+            const urlParams = new URLSearchParams(window.location.search);
+            const baseOverride = urlParams.get('rsm-base');
+            if (baseOverride) {
+                console.log('RSM Loader: Using explicit base override from URL:', baseOverride);
+                return baseOverride.replace(/\/$/, '');
+            }
+        } catch (e) {}
+        if (window.RSM_BASE_URL && typeof window.RSM_BASE_URL === 'string') {
+            console.log('RSM Loader: Using explicit base override from window.RSM_BASE_URL:', window.RSM_BASE_URL);
+            return window.RSM_BASE_URL.replace(/\/$/, '');
+        }
         // Check for URL parameter to override (for testing)
         // Usage: ?rsm-branch=development or ?rsm-branch=main
         const urlParams = new URLSearchParams(window.location.search);
@@ -38,6 +52,21 @@
         // Default to production
         console.log('RSM Loader: Loading from PRODUCTION branch (default)');
         return 'https://rsm-project.netlify.app';
+    }
+    
+    // Optionally enable LiveReload/BrowserSync client for hot-reload during local dev
+    function maybeEnableLiveReload() {
+        try {
+            const urlParams = new URLSearchParams(window.location.search);
+            const liveUrl = urlParams.get('rsm-livereload') || window.RSM_LIVE_RELOAD_URL;
+            if (!liveUrl) return;
+            const script = document.createElement('script');
+            script.src = liveUrl;
+            script.defer = true;
+            script.crossOrigin = 'anonymous';
+            document.head.appendChild(script);
+            console.log('RSM Loader: Live reload client enabled:', liveUrl);
+        } catch (e) {}
     }
     
     // Create RSM object immediately
@@ -123,6 +152,7 @@
     
     // Auto-load global scripts when DOM is ready
     function initGlobalScripts() {
+        maybeEnableLiveReload();
         // Load anim-init.js FIRST, then load everything else
         // This ensures AnimationManager is available before other scripts check for it
         window.RSM.loadScript('js/global/anim-init.js', function(error) {

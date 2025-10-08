@@ -125,11 +125,14 @@ $(document).ready(function () {
     );
     
     Matter.World.add(world, [ground, leftWall, rightWall]);
-    Matter.Engine.run(engine);
+    // Use Runner API (Engine.run is deprecated)
+    const runner = Matter.Runner.create();
+    Matter.Runner.run(runner, engine);
     
     return {
       engine,
       world,
+      runner,
       bodies: []
     };
   }
