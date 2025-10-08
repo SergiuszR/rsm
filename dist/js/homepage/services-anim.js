@@ -100,8 +100,8 @@ gsap.to(body, {
 // Rotate arrow 90 degrees clockwise
 if (arrow) {
   gsap.to(arrow, {
-    rotation: 90,
-    duration: 0.6,
+    rotation: -45,
+    duration: 0.5,
     ease: "power1.out"
   });
 }
