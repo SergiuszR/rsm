@@ -128,11 +128,17 @@
         container.classList.add('swiper');
         slider.classList.add('swiper-wrapper');
         cards.forEach(c => c.classList.add('swiper-slide'));
+        // Accessibility: mark wrapper as list and slides as list items
+        slider.setAttribute('role', 'list');
+        cards.forEach(c => c.setAttribute('role', 'listitem'));
     }
     function removeSwiperClasses() {
         container.classList.remove('swiper');
         slider.classList.remove('swiper-wrapper');
         cards.forEach(c => c.classList.remove('swiper-slide'));
+        // Remove accessibility roles when disabling Swiper mode
+        slider.removeAttribute('role');
+        cards.forEach(c => c.removeAttribute('role'));
     }
     function initSwiper() {
         if (swiper) return;

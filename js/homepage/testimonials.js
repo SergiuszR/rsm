@@ -334,6 +334,9 @@ $(document).ready(function() {
       containerEl.classList.add('swiper');
       $wrapper.addClass('swiper-wrapper');
       $cards.addClass('swiper-slide');
+      // Accessibility roles
+      $wrapper.attr('role', 'list');
+      $cards.attr('role', 'listitem');
 
       new Swiper(containerEl, {
         slidesPerView: window.innerWidth <= 768 ? 1.1 : 1.2,
@@ -363,6 +366,9 @@ $(document).ready(function() {
         observer: true,
         resizeObserver: true
       });
+      // Accessibility roles when wrapper is also container
+      $wrapper.attr('role', 'list');
+      $cards.attr('role', 'listitem');
     }
   }
   }  // Close initTestimonials function

@@ -67,6 +67,14 @@ $(document).ready(function() {
     }
 
     // Now initialize swiper
+    // Accessibility roles on wrapper and slides
+    try {
+        const wrapperEl = container.querySelector('.showcase_grid');
+        if (wrapperEl) wrapperEl.setAttribute('role', 'list');
+        const slideEls = container.querySelectorAll('.showcase_item-outer');
+        slideEls.forEach(el => el.setAttribute('role', 'listitem'));
+    } catch (e) {}
+
     swiper = new Swiper(container, {
         wrapperClass: 'showcase_grid',
         slideClass: 'showcase_item-outer',
