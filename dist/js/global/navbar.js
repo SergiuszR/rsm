@@ -1,9 +1,5 @@
 $(document).ready(function () {
     // Wait for GSAP and ScrollTrigger to be ready
-    if (!window.AnimationManager) {
-        console.error('AnimationManager not loaded for navbar');
-        return;
-    }
     
     (function waitForAnimationManager() {
         if (!window.AnimationManager || typeof window.AnimationManager.onReady !== 'function') {
@@ -62,6 +58,7 @@ $(document).ready(function () {
         });
         }
         
+        }
     })();
 });
 
