@@ -33,7 +33,7 @@ function playerVars() {
 
 function ytThumb(id) {
     // Try maxres; if not available YouTube serves a smaller image automatically
-    return 'https://img.youtube.com/vi/' + id + '/maxresdefault.jpg';
+    return 'https://i.ytimg.com/vi/' + id + '/maxresdefault.jpg';
 }
 
 function forceIdle(p) {
