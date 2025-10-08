@@ -70,10 +70,14 @@ Time: ~300ms after all scripts load
 ## Files Fixed (v2)
 
 ### Loader Script (Critical environment fix)
-- ✅ `rsm-loader.js` - Made baseURL dynamic to auto-detect environment
-  - Development branch now loads from `development--rsm-project.netlify.app`
-  - Production loads from `rsm-project.netlify.app`
-  - Prevents development from loading production scripts
+- ✅ `rsm-loader.js` - Made baseURL configurable for Webflow integration
+  - Webflow page URL: `robimy-social-media-dev.webflow.io` (always same)
+  - Scripts load from Netlify (branch-specific)
+  - Two methods to switch branches:
+    1. URL parameter: `?rsm-branch=development`
+    2. Global variable: `window.RSM_BRANCH = 'development'`
+  - Defaults to production if not configured
+  - See `WEBFLOW_SETUP.md` for complete setup guide
 
 ### Global Scripts (These were missing in v1)
 - ✅ `js/global/navbar.js` - Now waits for GSAP properly

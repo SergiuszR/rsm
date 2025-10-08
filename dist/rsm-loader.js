@@ -6,34 +6,38 @@
 (function() {
     'use strict';
     
-    // Auto-detect baseURL based on current domain
+    // Determine which Netlify branch to load scripts from
     function getBaseURL() {
-        const hostname = window.location.hostname;
+        // Check for URL parameter to override (for testing)
+        // Usage: ?rsm-branch=development or ?rsm-branch=main
+        const urlParams = new URLSearchParams(window.location.search);
+        const branchParam = urlParams.get('rsm-branch');
         
-        // Development environment (Netlify branch deploys)
-        if (hostname.includes('development--rsm-project.netlify.app')) {
+        if (branchParam === 'development') {
+            console.log('RSM Loader: Loading from DEVELOPMENT branch (via URL parameter)');
             return 'https://development--rsm-project.netlify.app';
         }
         
-        // Staging or other branch deploys (pattern: branchname--rsm-project.netlify.app)
-        if (hostname.includes('--rsm-project.netlify.app')) {
-            return `https://${hostname}`;
-        }
-        
-        // Production
-        if (hostname.includes('rsm-project.netlify.app')) {
+        if (branchParam === 'main' || branchParam === 'production') {
+            console.log('RSM Loader: Loading from PRODUCTION branch (via URL parameter)');
             return 'https://rsm-project.netlify.app';
         }
         
-        // Local development - load from production as fallback
-        // (or you could set up a local server and return the local URL)
-        if (hostname === 'localhost' || hostname === '127.0.0.1') {
-            console.warn('Running on localhost - loading scripts from production');
+        // Check for global config variable (can be set in Webflow custom code)
+        // Add to Webflow: <script>window.RSM_BRANCH = 'development';</script>
+        if (window.RSM_BRANCH === 'development') {
+            console.log('RSM Loader: Loading from DEVELOPMENT branch (via RSM_BRANCH config)');
+            return 'https://development--rsm-project.netlify.app';
+        }
+        
+        if (window.RSM_BRANCH === 'main' || window.RSM_BRANCH === 'production') {
+            console.log('RSM Loader: Loading from PRODUCTION branch (via RSM_BRANCH config)');
             return 'https://rsm-project.netlify.app';
         }
         
-        // Custom domain or unknown - use current origin
-        return window.location.origin;
+        // Default to production
+        console.log('RSM Loader: Loading from PRODUCTION branch (default)');
+        return 'https://rsm-project.netlify.app';
     }
     
     // Create RSM object immediately
