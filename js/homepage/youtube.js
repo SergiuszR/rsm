@@ -65,12 +65,29 @@ function bindHover($wrap, p) {
 }
 
 function initHoverPlayers() {
-    $('.video_container[data-video-id]').each(function() {
+    $('.video_container[data-video-id], .video-container[data-video-id]').each(function() {
         var $wrap = $(this);
         var id = $wrap.data('video-id');
         var $iframe = $wrap.find('iframe').first();
         var $poster = $wrap.find('.yt-poster').first();
-        if (!id || !$poster.length) return;
+        
+        // If no video ID, try to extract from iframe src
+        if (!id && $iframe.length) {
+            var src = $iframe.attr('src') || $iframe.attr('data-yt-src') || '';
+            var match = src.match(/(?:youtube\.com\/embed\/|youtu\.be\/)([^?&\/]+)/);
+            if (match && match[1]) {
+                id = match[1];
+                $wrap.attr('data-video-id', id);
+            }
+        }
+        
+        if (!id) return;
+
+        // Create poster if it doesn't exist
+        if (!$poster.length) {
+            $poster = $('<div class="yt-poster" aria-hidden="true"></div>');
+            $wrap.prepend($poster);
+        }
 
         // Set poster background
         $poster.css('background-image', 'url("' + ytThumb(id) + '")');
