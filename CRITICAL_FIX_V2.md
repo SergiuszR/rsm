@@ -81,11 +81,13 @@ Time: ~300ms after all scripts load
   - Defaults to production if not configured
   - See `WEBFLOW_SETUP.md` for complete setup guide
   
-  **Sequential Loading Fix:**
+  **Sequential Loading Fix (v2.1):**
   - **Problem**: All scripts loaded in parallel → race condition
   - Random errors: 1-6 scripts would fail (different each refresh)
   - `anim-init.js` sometimes loaded after other scripts checked for it
-  - **Solution**: Load `anim-init.js` FIRST, wait for completion, then load rest
+  - **Solution**: 
+    1. Load `anim-init.js` FIRST in global scripts, wait for completion
+    2. Fixed `homepage-loader.js` to wait for AnimationManager before loading page scripts
   - Now: 100% reliable, no random errors
 
 ### Global Scripts (These were missing in v1)

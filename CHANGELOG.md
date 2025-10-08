@@ -85,7 +85,9 @@ Each file now:
 - Added `anim-init.js` as the **first** global script to load
 - **Sequential loading fix** (v2.1) - Fixed race condition:
   - **Problem**: All scripts loaded in parallel, causing random "AnimationManager not loaded" errors
-  - **Solution**: Load `anim-init.js` first, wait for completion, then load rest
+  - **Solution**: 
+    1. Load `anim-init.js` first in global scripts, wait for completion
+    2. Updated `homepage-loader.js` to wait for AnimationManager before loading page scripts
   - Eliminates race condition - 100% reliable now
 - Maintains proper loading order: anim-init → other globals → page-specific scripts
 - **Made baseURL configurable** (v2 fix) - for Webflow integration:
@@ -147,18 +149,19 @@ Each file now:
 ### New Files
 - ✨ `js/global/anim-init.js` - Animation manager system
 
-### Updated Files (v2)
+### Updated Files (v2.1)
 - 📝 `js/homepage/video.js` - Progressive loading with Intersection Observer
 - 📝 `js/homepage/section-anim.js` - AnimationManager.onReady()
 - 📝 `js/homepage/services-anim.js` - AnimationManager.onReady()
 - 📝 `js/homepage/timeline-anim.js` - AnimationManager.onReady()
 - 📝 `js/homepage/blog-anim.js` - AnimationManager.onReady()
-- 📝 `js/homepage/testimonials.js` - AnimationManager.onReady()
+- 📝 `js/homepage/testimonials.js` - AnimationManager.onReady() + syntax fix
 - 📝 `js/homepage/marquee.js` - AnimationManager.onReady()
 - 📝 `js/global/navbar.js` - AnimationManager.onReady() (v2 fix)
 - 📝 `js/global/navbar-anim.js` - AnimationManager.onReady() (v2 fix)
 - 📝 `js/global/footer-physics.js` - AnimationManager.onReady() (v2 fix)
-- 📝 `rsm-loader.js` - Added anim-init.js to global scripts
+- 📝 `rsm-loader.js` - Sequential loading + dynamic baseURL
+- 📝 `homepage-loader.js` - Wait for AnimationManager (v2.1 fix)
 
 ### Dist Folder
 All changes have been copied to the `dist/` folder for production deployment.
