@@ -367,12 +367,25 @@ $(document).ready(function() {
   }
   }  // Close initTestimonials function
   
-  // Initialize when GSAP is ready using AnimationManager
-  if (window.AnimationManager) {
-    window.AnimationManager.onReady(initTestimonials);
-  } else {
-    console.error('AnimationManager not loaded for testimonials');
-  }
+  // Initialize when GSAP is ready using AnimationManager with polling fallback
+  (function waitForAnimationManager() {
+    if (window.AnimationManager && typeof window.AnimationManager.onReady === 'function') {
+      window.AnimationManager.onReady(initTestimonials);
+    } else {
+      let attempts = 0;
+      const maxAttempts = 100; // 5s
+      const timer = setInterval(function() {
+        attempts++;
+        if (window.AnimationManager && typeof window.AnimationManager.onReady === 'function') {
+          clearInterval(timer);
+          window.AnimationManager.onReady(initTestimonials);
+        } else if (attempts >= maxAttempts) {
+          clearInterval(timer);
+          console.error('AnimationManager not loaded for testimonials');
+        }
+      }, 50);
+    }
+  })();
 
   function initReelsAnimation() {
       if (!window.gsap || !window.ScrollTrigger) {
@@ -442,11 +455,24 @@ $(document).ready(function() {
     })
     }
     
-    // Initialize when GSAP is ready using AnimationManager
-    if (window.AnimationManager) {
-        window.AnimationManager.onReady(initReelsAnimation);
-    } else {
-        console.error('AnimationManager not loaded for reels animation');
-    }
+    // Initialize when GSAP is ready using AnimationManager with polling fallback
+    (function waitForAnimationManagerReels() {
+        if (window.AnimationManager && typeof window.AnimationManager.onReady === 'function') {
+            window.AnimationManager.onReady(initReelsAnimation);
+        } else {
+            let attempts = 0;
+            const maxAttempts = 100; // 5s
+            const timer = setInterval(function() {
+                attempts++;
+                if (window.AnimationManager && typeof window.AnimationManager.onReady === 'function') {
+                    clearInterval(timer);
+                    window.AnimationManager.onReady(initReelsAnimation);
+                } else if (attempts >= maxAttempts) {
+                    clearInterval(timer);
+                    console.error('AnimationManager not loaded for reels animation');
+                }
+            }, 50);
+        }
+    })();
 
 });

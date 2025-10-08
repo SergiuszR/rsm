@@ -1,16 +1,29 @@
 $(document).ready(function () {
   // Wait for GSAP and ScrollTrigger to be ready
-  if (!window.AnimationManager) {
-    console.error('AnimationManager not loaded for footer-physics');
-    return;
+  // Wait for AnimationManager with polling fallback
+  if (!window.AnimationManager || typeof window.AnimationManager.onReady !== 'function') {
+    let attempts = 0;
+    const maxAttempts = 100; // 5s
+    const timer = setInterval(function() {
+      attempts++;
+      if (window.AnimationManager && typeof window.AnimationManager.onReady === 'function') {
+        clearInterval(timer);
+        start();
+      } else if (attempts >= maxAttempts) {
+        clearInterval(timer);
+        console.error('AnimationManager not loaded for footer-physics');
+      }
+    }, 50);
+  } else {
+    start();
   }
 
   let physicsInstances = new Map(); // Track multiple physics instances
 
-  window.AnimationManager.onReady(function() {
+  function start() {
     gsap.registerPlugin(ScrollTrigger);
     initScrollTrigger();
-  });
+  }
 
   function initScrollTrigger() {
     const physicsElements = document.querySelectorAll('[data-physics]');

@@ -73,10 +73,23 @@ $(document).ready(function() {
     }
   }
   
-  // Initialize when GSAP is ready using AnimationManager
-  if (window.AnimationManager) {
-    window.AnimationManager.onReady(initMarqueeAnimation);
-  } else {
-    console.error('AnimationManager not loaded for marquee');
-  }
+  // Initialize when GSAP is ready using AnimationManager with polling fallback
+  (function waitForAnimationManager() {
+    if (window.AnimationManager && typeof window.AnimationManager.onReady === 'function') {
+      window.AnimationManager.onReady(initMarqueeAnimation);
+    } else {
+      let attempts = 0;
+      const maxAttempts = 100; // 5s
+      const timer = setInterval(function() {
+        attempts++;
+        if (window.AnimationManager && typeof window.AnimationManager.onReady === 'function') {
+          clearInterval(timer);
+          window.AnimationManager.onReady(initMarqueeAnimation);
+        } else if (attempts >= maxAttempts) {
+          clearInterval(timer);
+          console.error('AnimationManager not loaded for marquee');
+        }
+      }, 50);
+    }
+  })();
 })

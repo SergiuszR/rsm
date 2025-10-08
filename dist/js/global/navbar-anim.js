@@ -5,7 +5,25 @@ $(document).ready(function() {
         return;
     }
     
-    window.AnimationManager.onReady(function() {
+    (function waitForAnimationManager() {
+        if (!window.AnimationManager || typeof window.AnimationManager.onReady !== 'function') {
+            let attempts = 0;
+            const maxAttempts = 100; // 5s
+            const timer = setInterval(function() {
+                attempts++;
+                if (window.AnimationManager && typeof window.AnimationManager.onReady === 'function') {
+                    clearInterval(timer);
+                    window.AnimationManager.onReady(init);
+                } else if (attempts >= maxAttempts) {
+                    clearInterval(timer);
+                    console.error('AnimationManager not loaded for navbar-anim');
+                }
+            }, 50);
+        } else {
+            window.AnimationManager.onReady(init);
+        }
+
+        function init() {
         const navbar = document.querySelector('.navbar_component');
         if (!navbar) return;
 
@@ -136,5 +154,6 @@ ScrollTrigger.create({
 
         // Initial setup
         updateNavbarContrast();
-    });
+        }
+    })();
 });

@@ -64,11 +64,24 @@ $(document).ready(function() {
         });
     }
     
-    // Initialize when GSAP is ready using AnimationManager
-    if (window.AnimationManager) {
-        window.AnimationManager.onReady(initBlogAnimation);
-    } else {
-        console.error('AnimationManager not loaded for blog-anim');
-    }
+    // Initialize when GSAP is ready using AnimationManager with polling fallback
+    (function waitForAnimationManager() {
+        if (window.AnimationManager && typeof window.AnimationManager.onReady === 'function') {
+            window.AnimationManager.onReady(initBlogAnimation);
+        } else {
+            let attempts = 0;
+            const maxAttempts = 100; // 5s
+            const timer = setInterval(function() {
+                attempts++;
+                if (window.AnimationManager && typeof window.AnimationManager.onReady === 'function') {
+                    clearInterval(timer);
+                    window.AnimationManager.onReady(initBlogAnimation);
+                } else if (attempts >= maxAttempts) {
+                    clearInterval(timer);
+                    console.error('AnimationManager not loaded for blog-anim');
+                }
+            }, 50);
+        }
+    })();
   });
   
