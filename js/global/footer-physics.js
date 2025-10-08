@@ -1,4 +1,7 @@
 $(document).ready(function () {
+  // Track multiple physics instances (declare before any callbacks to avoid TDZ)
+  let physicsInstances = new Map();
+  
   // Wait for GSAP and ScrollTrigger to be ready
   // Wait for AnimationManager with polling fallback
   if (!window.AnimationManager || typeof window.AnimationManager.onReady !== 'function') {
@@ -17,8 +20,6 @@ $(document).ready(function () {
   } else {
     start();
   }
-
-  let physicsInstances = new Map(); // Track multiple physics instances
 
   function start() {
     gsap.registerPlugin(ScrollTrigger);
