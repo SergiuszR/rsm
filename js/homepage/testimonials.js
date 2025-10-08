@@ -1,5 +1,12 @@
 $(document).ready(function() {
-  if (typeof $ === 'undefined' || typeof gsap === 'undefined') return;
+  if (typeof $ === 'undefined') return;
+  
+  // Check GSAP availability before proceeding
+  function initTestimonials() {
+    if (typeof gsap === 'undefined') {
+      console.warn('GSAP not loaded for testimonials');
+      return;
+    }
   
   const $wrapper = $('.testimonials_list-wrapper');
   const $cards = $wrapper.find('.testimonials_item');
@@ -358,14 +365,39 @@ $(document).ready(function() {
       });
     }
   }
+  }  // Close initTestimonials function
+  
+  // Initialize when GSAP is ready using AnimationManager with polling fallback
+  (function waitForAnimationManager() {
+    if (window.AnimationManager && typeof window.AnimationManager.onReady === 'function') {
+      window.AnimationManager.onReady(initTestimonials);
+    } else {
+      let attempts = 0;
+      const maxAttempts = 100; // 5s
+      const timer = setInterval(function() {
+        attempts++;
+        if (window.AnimationManager && typeof window.AnimationManager.onReady === 'function') {
+          clearInterval(timer);
+          window.AnimationManager.onReady(initTestimonials);
+        } else if (attempts >= maxAttempts) {
+          clearInterval(timer);
+          console.error('AnimationManager not loaded for testimonials');
+        }
+      }, 50);
+    }
+  })();
 
-
-
-    const isMobile = window.innerWidth <= 768;
-    const duration = isMobile ? 0.35 : 0.4;
-    
-    
-    gsap.set('[data-section="reels"] [data-left-col], [data-section="reels"] [data-center-col], [data-section="reels"] [data-right-col]', {
+  function initReelsAnimation() {
+      if (!window.gsap || !window.ScrollTrigger) {
+        console.warn('GSAP or ScrollTrigger not loaded for reels animation');
+        return;
+      }
+      
+      const isMobile = window.innerWidth <= 768;
+      const duration = isMobile ? 0.35 : 0.4;
+      
+      
+      gsap.set('[data-section="reels"] [data-left-col], [data-section="reels"] [data-center-col], [data-section="reels"] [data-right-col]', {
         opacity: 0,
         x: 0,
         y: 0
@@ -420,4 +452,27 @@ $(document).ready(function() {
             end: 'bottom 0%',
             scrub: 0.5
         }
-    })});
+    })
+    }
+    
+    // Initialize when GSAP is ready using AnimationManager with polling fallback
+    (function waitForAnimationManagerReels() {
+        if (window.AnimationManager && typeof window.AnimationManager.onReady === 'function') {
+            window.AnimationManager.onReady(initReelsAnimation);
+        } else {
+            let attempts = 0;
+            const maxAttempts = 100; // 5s
+            const timer = setInterval(function() {
+                attempts++;
+                if (window.AnimationManager && typeof window.AnimationManager.onReady === 'function') {
+                    clearInterval(timer);
+                    window.AnimationManager.onReady(initReelsAnimation);
+                } else if (attempts >= maxAttempts) {
+                    clearInterval(timer);
+                    console.error('AnimationManager not loaded for reels animation');
+                }
+            }, 50);
+        }
+    })();
+
+});

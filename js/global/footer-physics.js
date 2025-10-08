@@ -1,11 +1,30 @@
 $(document).ready(function () {
-  gsap.registerPlugin(ScrollTrigger);
+  // Track multiple physics instances (declare before any callbacks to avoid TDZ)
+  let physicsInstances = new Map();
+  
+  // Wait for GSAP and ScrollTrigger to be ready
+  // Wait for AnimationManager with polling fallback
+  if (!window.AnimationManager || typeof window.AnimationManager.onReady !== 'function') {
+    let attempts = 0;
+    const maxAttempts = 100; // 5s
+    const timer = setInterval(function() {
+      attempts++;
+      if (window.AnimationManager && typeof window.AnimationManager.onReady === 'function') {
+        clearInterval(timer);
+        start();
+      } else if (attempts >= maxAttempts) {
+        clearInterval(timer);
+        console.error('AnimationManager not loaded for footer-physics');
+      }
+    }, 50);
+  } else {
+    start();
+  }
 
-  let physicsInstances = new Map(); // Track multiple physics instances
-
-  setTimeout(() => {
+  function start() {
+    gsap.registerPlugin(ScrollTrigger);
     initScrollTrigger();
-  }, 100);
+  }
 
   function initScrollTrigger() {
     const physicsElements = document.querySelectorAll('[data-physics]');
@@ -106,11 +125,14 @@ $(document).ready(function () {
     );
     
     Matter.World.add(world, [ground, leftWall, rightWall]);
-    Matter.Engine.run(engine);
+    // Use Runner API (Engine.run is deprecated)
+    const runner = Matter.Runner.create();
+    Matter.Runner.run(runner, engine);
     
     return {
       engine,
       world,
+      runner,
       bodies: []
     };
   }

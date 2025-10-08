@@ -6,9 +6,72 @@
 (function() {
     'use strict';
     
+    // Determine which Netlify branch (or custom base) to load scripts from
+    function getBaseURL() {
+        // Highest priority: explicit base override
+        // URL param: ?rsm-base=https://my-host.example.com
+        try {
+            const urlParams = new URLSearchParams(window.location.search);
+            const baseOverride = urlParams.get('rsm-base');
+            if (baseOverride) {
+                console.log('RSM Loader: Using explicit base override from URL:', baseOverride);
+                return baseOverride.replace(/\/$/, '');
+            }
+        } catch (e) {}
+        if (window.RSM_BASE_URL && typeof window.RSM_BASE_URL === 'string') {
+            console.log('RSM Loader: Using explicit base override from window.RSM_BASE_URL:', window.RSM_BASE_URL);
+            return window.RSM_BASE_URL.replace(/\/$/, '');
+        }
+        // Check for URL parameter to override (for testing)
+        // Usage: ?rsm-branch=development or ?rsm-branch=main
+        const urlParams = new URLSearchParams(window.location.search);
+        const branchParam = urlParams.get('rsm-branch');
+        
+        if (branchParam === 'development') {
+            console.log('RSM Loader: Loading from DEVELOPMENT branch (via URL parameter)');
+            return 'https://development--rsm-project.netlify.app';
+        }
+        
+        if (branchParam === 'main' || branchParam === 'production') {
+            console.log('RSM Loader: Loading from PRODUCTION branch (via URL parameter)');
+            return 'https://rsm-project.netlify.app';
+        }
+        
+        // Check for global config variable (can be set in Webflow custom code)
+        // Add to Webflow: <script>window.RSM_BRANCH = 'development';</script>
+        if (window.RSM_BRANCH === 'development') {
+            console.log('RSM Loader: Loading from DEVELOPMENT branch (via RSM_BRANCH config)');
+            return 'https://development--rsm-project.netlify.app';
+        }
+        
+        if (window.RSM_BRANCH === 'main' || window.RSM_BRANCH === 'production') {
+            console.log('RSM Loader: Loading from PRODUCTION branch (via RSM_BRANCH config)');
+            return 'https://rsm-project.netlify.app';
+        }
+        
+        // Default to production
+        console.log('RSM Loader: Loading from PRODUCTION branch (default)');
+        return 'https://rsm-project.netlify.app';
+    }
+    
+    // Optionally enable LiveReload/BrowserSync client for hot-reload during local dev
+    function maybeEnableLiveReload() {
+        try {
+            const urlParams = new URLSearchParams(window.location.search);
+            const liveUrl = urlParams.get('rsm-livereload') || window.RSM_LIVE_RELOAD_URL;
+            if (!liveUrl) return;
+            const script = document.createElement('script');
+            script.src = liveUrl;
+            script.defer = true;
+            script.crossOrigin = 'anonymous';
+            document.head.appendChild(script);
+            console.log('RSM Loader: Live reload client enabled:', liveUrl);
+        } catch (e) {}
+    }
+    
     // Create RSM object immediately
     window.RSM = {
-        baseURL: 'https://rsm-project.netlify.app',
+        baseURL: getBaseURL(),
         loaded: new Set(),
         
         // Load a single script
@@ -89,15 +152,26 @@
     
     // Auto-load global scripts when DOM is ready
     function initGlobalScripts() {
-        window.RSM.loadScripts([
-            'js/global/footer.js',
-            'js/global/lenis.js',
-            'js/global/contact-modal.js',
-            'js/global/navbar.js',
-            'js/global/footer-physics.js',
-            'js/global/utils.js',
-            'js/global/navbar-anim.js'
-        ]);
+        maybeEnableLiveReload();
+        // Load anim-init.js FIRST, then load everything else
+        // This ensures AnimationManager is available before other scripts check for it
+        window.RSM.loadScript('js/global/anim-init.js', function(error) {
+            if (error) {
+                console.error('Failed to load anim-init.js:', error);
+                return;
+            }
+            
+            // Now load the rest of the global scripts (these can load in parallel)
+            window.RSM.loadScripts([
+                'js/global/footer.js',
+                'js/global/lenis.js',
+                'js/global/contact-modal.js',
+                'js/global/navbar.js',
+                'js/global/footer-physics.js',
+                'js/global/utils.js',
+                'js/global/navbar-anim.js'
+            ]);
+        });
     }
     
     // Initialize when DOM is ready

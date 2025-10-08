@@ -1,17 +1,28 @@
 (function () {
-    if (!window.gsap) return;
-    gsap.registerPlugin(ScrollTrigger);
+    // Wait for GSAP and ScrollTrigger to be ready
+    function initAnimation() {
+        if (!window.gsap || !window.ScrollTrigger) {
+            console.warn('GSAP or ScrollTrigger not loaded for section-anim');
+            return;
+        }
+        
+        gsap.registerPlugin(ScrollTrigger);
 
-    const header    = document.getElementById("transition-header");
-    const boxTop    = document.getElementById("box-top");
-    const fromEl    = document.getElementById("from-animate");
-    const toEl      = document.getElementById("to-animate");
-    const boxBottom = document.getElementById("box-bottom");
-    const decorImages = document.querySelectorAll(".s-decor-image-wrapper");
+        const header    = document.getElementById("transition-header");
+        const boxTop    = document.getElementById("box-top");
+        const fromEl    = document.getElementById("from-animate");
+        const toEl      = document.getElementById("to-animate");
+        const boxBottom = document.getElementById("box-bottom");
+        const decorImages = document.querySelectorAll(".s-decor-image-wrapper");
 
-    if (!header || !boxTop || !fromEl || !toEl || !boxBottom) return;
+        if (!header || !boxTop || !fromEl || !toEl || !boxBottom) return;
 
-    ScrollTrigger.getAll().forEach(t => t.kill());
+        // Clean up any existing ScrollTriggers for this section only
+        ScrollTrigger.getAll().forEach(t => {
+            if (t.trigger === header || t.vars.trigger === '#benefits') {
+                t.kill();
+            }
+        });
 
     const fromText = fromEl.textContent;
     const toText = toEl.textContent;
@@ -151,4 +162,26 @@
     },
     once: true
   });
+    }
+    
+    // Initialize when GSAP is ready using AnimationManager with polling fallback
+    (function waitForAnimationManager() {
+        if (window.AnimationManager && typeof window.AnimationManager.onReady === 'function') {
+            window.AnimationManager.onReady(initAnimation);
+        } else {
+            // Retry for up to 5s
+            let attempts = 0;
+            const maxAttempts = 100; // 100 * 50ms = 5s
+            const timer = setInterval(function() {
+                attempts++;
+                if (window.AnimationManager && typeof window.AnimationManager.onReady === 'function') {
+                    clearInterval(timer);
+                    window.AnimationManager.onReady(initAnimation);
+                } else if (attempts >= maxAttempts) {
+                    clearInterval(timer);
+                    console.error('AnimationManager not loaded for section-anim');
+                }
+            }, 50);
+        }
+    })();
 })();

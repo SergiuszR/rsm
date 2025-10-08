@@ -1,10 +1,31 @@
 $(document).ready(function () {
-    gsap.registerPlugin(ScrollTrigger);
+    // Wait for GSAP and ScrollTrigger to be ready
+    
+    (function waitForAnimationManager() {
+        if (!window.AnimationManager || typeof window.AnimationManager.onReady !== 'function') {
+            let attempts = 0;
+            const maxAttempts = 100; // 5s
+            const timer = setInterval(function() {
+                attempts++;
+                if (window.AnimationManager && typeof window.AnimationManager.onReady === 'function') {
+                    clearInterval(timer);
+                    window.AnimationManager.onReady(init);
+                } else if (attempts >= maxAttempts) {
+                    clearInterval(timer);
+                    console.error('AnimationManager not loaded for navbar');
+                }
+            }, 50);
+        } else {
+            window.AnimationManager.onReady(init);
+        }
+        
+        function init() {
+        gsap.registerPlugin(ScrollTrigger);
 
-    const $navbar = $('[data-element="navbar"]');
-    const $banner = $('[data-element="banner"]');
+        const $navbar = $('[data-element="navbar"]');
+        const $banner = $('[data-element="banner"]');
 
-    if ($navbar.length > 0) {
+        if ($navbar.length > 0) {
         let lastY = 0;
         const threshold = 5;
 
@@ -35,6 +56,9 @@ $(document).ready(function () {
                 }
             }
         });
-    }
+        }
+        
+        }
+    })();
 });
 

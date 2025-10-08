@@ -1,0 +1,148 @@
+/**
+ * Animation Initialization Manager
+ * Ensures proper initialization order and ScrollTrigger refresh
+ */
+
+(function() {
+    'use strict';
+    
+    // Create global animation manager
+    window.AnimationManager = {
+        initialized: false,
+        readyCallbacks: [],
+        contentLoadedCallbacks: [],
+        scriptsLoaded: 0,
+        totalScripts: 0,
+        
+        /**
+         * Register a callback to run when GSAP and ScrollTrigger are ready
+         */
+        onReady: function(callback) {
+            if (this.initialized && window.gsap && window.ScrollTrigger) {
+                callback();
+            } else {
+                this.readyCallbacks.push(callback);
+            }
+        },
+        
+        /**
+         * Register a callback to run after all content is loaded
+         */
+        onContentLoaded: function(callback) {
+            this.contentLoadedCallbacks.push(callback);
+        },
+        
+        /**
+         * Initialize the animation system
+         */
+        init: function() {
+            if (this.initialized) return;
+            
+            // Check if GSAP and ScrollTrigger are available
+            const checkGSAP = () => {
+                if (window.gsap && window.ScrollTrigger) {
+                    this.initialized = true;
+                    
+                    // Register ScrollTrigger plugin
+                    gsap.registerPlugin(ScrollTrigger);
+                    
+                    // Run all ready callbacks
+                    this.readyCallbacks.forEach(callback => {
+                        try {
+                            callback();
+                        } catch (e) {
+                            console.error('Animation callback error:', e);
+                        }
+                    });
+                    
+                    // Clear callbacks
+                    this.readyCallbacks = [];
+                    
+                    // Setup content loaded detection
+                    this.setupContentLoadedDetection();
+                } else {
+                    // Retry after a short delay
+                    setTimeout(checkGSAP, 50);
+                }
+            };
+            
+            checkGSAP();
+        },
+        
+        /**
+         * Setup detection for when all content is loaded
+         */
+        setupContentLoadedDetection: function() {
+            let allContentLoaded = false;
+            
+            const triggerContentLoaded = () => {
+                if (allContentLoaded) return;
+                allContentLoaded = true;
+                
+                // Small delay to ensure everything is settled
+                setTimeout(() => {
+                    // Refresh ScrollTrigger to recalculate all positions
+                    if (window.ScrollTrigger) {
+                        ScrollTrigger.refresh();
+                    }
+                    
+                    // Run all content loaded callbacks
+                    this.contentLoadedCallbacks.forEach(callback => {
+                        try {
+                            callback();
+                        } catch (e) {
+                            console.error('Content loaded callback error:', e);
+                        }
+                    });
+                    
+                    // Clear callbacks
+                    this.contentLoadedCallbacks = [];
+                }, 300);
+            };
+            
+            // Listen for various load events
+            if (document.readyState === 'complete') {
+                triggerContentLoaded();
+            } else {
+                window.addEventListener('load', triggerContentLoaded);
+            }
+            
+            // Also trigger after a timeout as fallback
+            setTimeout(triggerContentLoaded, 2000);
+        },
+        
+        /**
+         * Manually trigger a ScrollTrigger refresh
+         */
+        refreshScrollTrigger: function() {
+            if (window.ScrollTrigger) {
+                requestAnimationFrame(() => {
+                    ScrollTrigger.refresh();
+                });
+            }
+        },
+        
+        /**
+         * Report that a script has loaded (for tracking purposes)
+         */
+        scriptLoaded: function(scriptName) {
+            this.scriptsLoaded++;
+            
+            // If all expected scripts are loaded, refresh ScrollTrigger
+            if (this.totalScripts > 0 && this.scriptsLoaded >= this.totalScripts) {
+                this.refreshScrollTrigger();
+            }
+        }
+    };
+    
+    // Auto-initialize when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+            window.AnimationManager.init();
+        });
+    } else {
+        window.AnimationManager.init();
+    }
+    
+})();
+

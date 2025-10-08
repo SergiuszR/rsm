@@ -3,18 +3,26 @@ $(document).ready(function() {
     if (window.innerWidth <= BREAKPOINT_TABLET) {
         return;
     }
-    gsap.registerPlugin(ScrollTrigger);
     
-    const $timelineComponent = $('.timeline_component');
-    const $progressLine = $('[data-animation="timeline-progress"]');
-    const $timelineRows = $('.timeline_row');
-    const $timelineDot = $('.timeline_dot');
-    const $circleWrappers = $('.timeline_circle-wrapper');
-    
-    if ($timelineComponent.length === 0 || $progressLine.length === 0) {
-        console.warn('Timeline elements not found');
-        return;
-    }
+    // Wait for GSAP and ScrollTrigger
+    function initTimelineAnimation() {
+        if (!window.gsap || !window.ScrollTrigger) {
+            console.warn('GSAP or ScrollTrigger not loaded for timeline-anim');
+            return;
+        }
+        
+        gsap.registerPlugin(ScrollTrigger);
+        
+        const $timelineComponent = $('.timeline_component');
+        const $progressLine = $('[data-animation="timeline-progress"]');
+        const $timelineRows = $('.timeline_row');
+        const $timelineDot = $('.timeline_dot');
+        const $circleWrappers = $('.timeline_circle-wrapper');
+        
+        if ($timelineComponent.length === 0 || $progressLine.length === 0) {
+            console.warn('Timeline elements not found');
+            return;
+        }
     
     // Set initial states
     gsap.set($progressLine[0], { height: '0%' });
@@ -139,4 +147,25 @@ $(document).ready(function() {
         // Update ScrollTrigger positions
         ScrollTrigger.refresh();
     });
+    }
+    
+    // Initialize when GSAP is ready using AnimationManager with polling fallback
+    (function waitForAnimationManager() {
+        if (window.AnimationManager && typeof window.AnimationManager.onReady === 'function') {
+            window.AnimationManager.onReady(initTimelineAnimation);
+        } else {
+            let attempts = 0;
+            const maxAttempts = 100; // 5s
+            const timer = setInterval(function() {
+                attempts++;
+                if (window.AnimationManager && typeof window.AnimationManager.onReady === 'function') {
+                    clearInterval(timer);
+                    window.AnimationManager.onReady(initTimelineAnimation);
+                } else if (attempts >= maxAttempts) {
+                    clearInterval(timer);
+                    console.error('AnimationManager not loaded for timeline-anim');
+                }
+            }, 50);
+        }
+    })();
 });

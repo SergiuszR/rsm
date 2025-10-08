@@ -6,7 +6,14 @@ $(document).ready(function() {
     return;
   }
   
-  gsap.registerPlugin(ScrollTrigger);
+  // Wait for GSAP and ScrollTrigger
+  function initServicesReveal() {
+    if (!window.gsap || !window.ScrollTrigger) {
+      console.warn('GSAP or ScrollTrigger not loaded for services-anim reveal');
+      return;
+    }
+    
+    gsap.registerPlugin(ScrollTrigger);
   
   // Create timeline for accordion items
   const tl = gsap.timeline({
@@ -32,7 +39,27 @@ $(document).ready(function() {
       ease: "power2.out"
     }
   );
+  }
   
+  // Initialize when GSAP is ready using AnimationManager with polling fallback
+  (function waitForAnimationManager() {
+    if (window.AnimationManager && typeof window.AnimationManager.onReady === 'function') {
+      window.AnimationManager.onReady(initServicesReveal);
+    } else {
+      let attempts = 0;
+      const maxAttempts = 100; // 5s
+      const timer = setInterval(function() {
+        attempts++;
+        if (window.AnimationManager && typeof window.AnimationManager.onReady === 'function') {
+          clearInterval(timer);
+          window.AnimationManager.onReady(initServicesReveal);
+        } else if (attempts >= maxAttempts) {
+          clearInterval(timer);
+          console.error('AnimationManager not loaded for services-anim reveal');
+        }
+      }, 50);
+    }
+  })();
 });
 
 
@@ -42,6 +69,12 @@ $(document).ready(function() {
 $(document).ready(function() {
   // Only run on desktop (>= 992px)
   if (!window.matchMedia('(min-width: 992px)').matches) {
+    return;
+  }
+  
+  // Check GSAP availability
+  if (!window.gsap) {
+    console.warn('GSAP not loaded for services-anim hover');
     return;
   }
   
