@@ -338,6 +338,11 @@ $(document).ready(function() {
       $wrapper.attr('role', 'list');
       $cards.attr('role', 'listitem');
 
+      const applyA11yRoles = () => {
+        $wrapper.attr('role', 'list');
+        $cards.attr('role', 'listitem');
+      };
+
       new Swiper(containerEl, {
         slidesPerView: window.innerWidth <= 768 ? 1.1 : 1.2,
         spaceBetween: 16,
@@ -348,10 +353,20 @@ $(document).ready(function() {
         watchOverflow: true,
         observeParents: true,
         observer: true,
-        resizeObserver: true
+        resizeObserver: true,
+        a11y: { enabled: false },
+        on: {
+          init: applyA11yRoles,
+          update: applyA11yRoles
+        }
       });
     } else {
       // If wrapper is also the container, use wrapperClass/slideClass config
+      const applyA11yRoles = () => {
+        $wrapper.attr('role', 'list');
+        $cards.attr('role', 'listitem');
+      };
+
       new Swiper(containerEl, {
         wrapperClass: 'testimonials_list-wrapper',
         slideClass: 'testimonials_item',
@@ -364,7 +379,12 @@ $(document).ready(function() {
         watchOverflow: true,
         observeParents: true,
         observer: true,
-        resizeObserver: true
+        resizeObserver: true,
+        a11y: { enabled: false },
+        on: {
+          init: applyA11yRoles,
+          update: applyA11yRoles
+        }
       });
       // Accessibility roles when wrapper is also container
       $wrapper.attr('role', 'list');

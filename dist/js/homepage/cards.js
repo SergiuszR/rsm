@@ -151,6 +151,11 @@
             return;
         }
 
+        const applyA11yRoles = () => {
+            slider.setAttribute('role', 'list');
+            cards.forEach(c => c.setAttribute('role', 'listitem'));
+        };
+
         swiper = new Swiper(container, {
             slidesPerView: 1.2,
             spaceBetween: 16,          // 1rem gap
@@ -161,7 +166,13 @@
             roundLengths: true,        // avoid subpixel cutoffs
             observeParents: true,
             observer: true,
-            resizeObserver: true
+            resizeObserver: true,
+            // Disable Swiper's A11y mutations so our roles persist
+            a11y: { enabled: false },
+            on: {
+                init: applyA11yRoles,
+                update: applyA11yRoles
+            }
         });
 
         // Ensure last slide has no trailing gap (prevents right-side cut)

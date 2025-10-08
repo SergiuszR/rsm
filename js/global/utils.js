@@ -75,6 +75,13 @@ $(document).ready(function() {
         slideEls.forEach(el => el.setAttribute('role', 'listitem'));
     } catch (e) {}
 
+    const applyA11yRoles = () => {
+        const wrapperEl = container.querySelector('.showcase_grid');
+        if (wrapperEl) wrapperEl.setAttribute('role', 'list');
+        const slideEls = container.querySelectorAll('.showcase_item-outer');
+        slideEls.forEach(el => el.setAttribute('role', 'listitem'));
+    };
+
     swiper = new Swiper(container, {
         wrapperClass: 'showcase_grid',
         slideClass: 'showcase_item-outer',
@@ -103,6 +110,7 @@ $(document).ready(function() {
         on: {
             init: function() {
                 updateArrowStates();
+                applyA11yRoles();
             },
             slideChange: function() {
                 updateArrowStates();
@@ -112,8 +120,12 @@ $(document).ready(function() {
             },
             reachEnd: function() {
                 updateArrowStates();
+            },
+            update: function() {
+                applyA11yRoles();
             }
-        }
+        },
+        a11y: { enabled: false }
     });
 
     // Prevent anchors from jumping to top
