@@ -167,3 +167,29 @@ $(document).ready(function() {
       .catch(err => console.error('Error:', err));
   });
   
+
+//   Section decor animation
+
+
+gsap.from("[data-decor='timeline']", {
+    x: 200,
+    duration: 0.8,
+    ease: "back.out(2.4)",
+    scrollTrigger: {
+      trigger: "[data-decor='timeline']",
+      start: 'top 85%', 
+      once: true
+    }
+  });
+  
+  gsap.from("[data-decor='portfolio']", {
+    x: -200,
+    y: -100,
+    duration: 0.8,
+    ease: "back.out(2.4)",
+    scrollTrigger: {
+      trigger: "[data-decor='portfolio']",
+      start: 'bottom 30%', 
+      once: true
+    }
+  });
