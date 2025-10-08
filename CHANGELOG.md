@@ -83,14 +83,16 @@ Each file now:
 
 **Changes:**
 - Added `anim-init.js` as the **first** global script to load
-- Ensures animation manager is available before any animations initialize
+- **Sequential loading fix** (v2.1) - Fixed race condition:
+  - **Problem**: All scripts loaded in parallel, causing random "AnimationManager not loaded" errors
+  - **Solution**: Load `anim-init.js` first, wait for completion, then load rest
+  - Eliminates race condition - 100% reliable now
 - Maintains proper loading order: anim-init → other globals → page-specific scripts
-- **Made baseURL dynamic** (v2 fix) - auto-detects environment:
-  - `development--rsm-project.netlify.app` → loads from development
-  - `branchname--rsm-project.netlify.app` → loads from that branch
-  - `rsm-project.netlify.app` → loads from production
-  - Custom domains → uses current origin
-  - This ensures each branch loads its own scripts, not production scripts
+- **Made baseURL configurable** (v2 fix) - for Webflow integration:
+  - URL parameter: `?rsm-branch=development`
+  - Global variable: `window.RSM_BRANCH = 'development'`
+  - Defaults to production
+  - See `WEBFLOW_SETUP.md` for setup guide
 
 ---
 

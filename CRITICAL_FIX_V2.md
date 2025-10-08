@@ -69,8 +69,10 @@ Time: ~300ms after all scripts load
 
 ## Files Fixed (v2)
 
-### Loader Script (Critical environment fix)
-- ✅ `rsm-loader.js` - Made baseURL configurable for Webflow integration
+### Loader Script (Critical fixes)
+- ✅ `rsm-loader.js` - Multiple critical fixes:
+  
+  **Environment Detection:**
   - Webflow page URL: `robimy-social-media-dev.webflow.io` (always same)
   - Scripts load from Netlify (branch-specific)
   - Two methods to switch branches:
@@ -78,6 +80,13 @@ Time: ~300ms after all scripts load
     2. Global variable: `window.RSM_BRANCH = 'development'`
   - Defaults to production if not configured
   - See `WEBFLOW_SETUP.md` for complete setup guide
+  
+  **Sequential Loading Fix:**
+  - **Problem**: All scripts loaded in parallel → race condition
+  - Random errors: 1-6 scripts would fail (different each refresh)
+  - `anim-init.js` sometimes loaded after other scripts checked for it
+  - **Solution**: Load `anim-init.js` FIRST, wait for completion, then load rest
+  - Now: 100% reliable, no random errors
 
 ### Global Scripts (These were missing in v1)
 - ✅ `js/global/navbar.js` - Now waits for GSAP properly

@@ -123,16 +123,25 @@
     
     // Auto-load global scripts when DOM is ready
     function initGlobalScripts() {
-        window.RSM.loadScripts([
-            'js/global/anim-init.js',
-            'js/global/footer.js',
-            'js/global/lenis.js',
-            'js/global/contact-modal.js',
-            'js/global/navbar.js',
-            'js/global/footer-physics.js',
-            'js/global/utils.js',
-            'js/global/navbar-anim.js'
-        ]);
+        // Load anim-init.js FIRST, then load everything else
+        // This ensures AnimationManager is available before other scripts check for it
+        window.RSM.loadScript('js/global/anim-init.js', function(error) {
+            if (error) {
+                console.error('Failed to load anim-init.js:', error);
+                return;
+            }
+            
+            // Now load the rest of the global scripts (these can load in parallel)
+            window.RSM.loadScripts([
+                'js/global/footer.js',
+                'js/global/lenis.js',
+                'js/global/contact-modal.js',
+                'js/global/navbar.js',
+                'js/global/footer-physics.js',
+                'js/global/utils.js',
+                'js/global/navbar-anim.js'
+            ]);
+        });
     }
     
     // Initialize when DOM is ready
