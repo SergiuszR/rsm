@@ -1,11 +1,24 @@
 $(document).ready(function() {
-(function loadYT() {
-    if (window.YT && YT.Player) return;
+// Lazy-load the YouTube Iframe API only on first interaction
+var ytApiReady = false;
+var ytApiLoading = false;
+var ytApiReadyResolvers = [];
+
+function loadYTApiOnce() {
+    if (ytApiReady && window.YT && YT.Player) return Promise.resolve();
+    if (ytApiLoading) return new Promise(function(resolve) { ytApiReadyResolvers.push(resolve); });
+    ytApiLoading = true;
+
+    // Ensure privacy-enhanced (no-cookie) host is used by the API
+    window.YTConfig = { host: 'https://www.youtube-nocookie.com' };
+
     var s = document.createElement('script');
     s.id = 'yt-iframe-api';
     s.src = 'https://www.youtube.com/iframe_api';
     (document.head || document.body || document.documentElement).appendChild(s);
-})();
+
+    return new Promise(function(resolve) { ytApiReadyResolvers.push(resolve); });
+}
 
 function playerVars() {
     return {
@@ -57,43 +70,76 @@ function initHoverPlayers() {
         var id = $wrap.data('video-id');
         var $iframe = $wrap.find('iframe').first();
         var $poster = $wrap.find('.yt-poster').first();
-        if (!id || !$iframe.length || !$poster.length) return;
+        if (!id || !$poster.length) return;
 
         // Set poster background
         $poster.css('background-image', 'url("' + ytThumb(id) + '")');
 
-        // Replace iframe with API target
-        var $div = $('<div class="yt-api-player" />');
-        $div.attr('title', $iframe.attr('title') || 'YouTube video');
-        $iframe.replaceWith($div);
+        // Immediately neutralize any pre-rendered iframes to avoid instant loads/cookies
+        if ($iframe.length) {
+            var $div = $('<div class="yt-api-player" />');
+            $div.attr('title', $iframe.attr('title') || 'YouTube video');
+            $iframe.replaceWith($div);
+        } else if (!$wrap.find('.yt-api-player').length) {
+            $wrap.append($('<div class="yt-api-player" title="YouTube video" />'));
+        }
 
-        // Prevent any interaction until ready
-        $wrap.css('pointer-events', 'none');
+        // Create player on first interaction only
+        var inited = false;
+        function ensurePlayer(trigger) {
+            if (inited) return;
+            inited = true;
 
-        var player = new YT.Player($div[0], {
-            videoId: id,
-            playerVars: playerVars(),
-            events: {
-                onReady: function(e) {
-                    var p = e.target;
-                    try { p.mute(); } catch(e) {}
-                    // Ensure paused with poster visible
-                    forceIdle(p);
-                    $wrap.css('pointer-events', '');
-                    bindHover($wrap, p);
-                },
-                onStateChange: function(e) {
-                    // Guard against unexpected auto-start before hover
-                    if ((e.data === YT.PlayerState.PLAYING || e.data === YT.PlayerState.BUFFERING) && !$wrap.is('.is-playing')) {
-                        forceIdle(e.target);
+            var $div = $wrap.find('.yt-api-player').first();
+            $wrap.css('pointer-events', 'none');
+
+            loadYTApiOnce().then(function() {
+                // Resolve API ready via global callback
+                if (window.YT && YT.Player) return;
+            }).then(function() {
+                return new Promise(function(resolve) {
+                    if (window.YT && YT.Player) return resolve();
+                    // Will be resolved by onYouTubeIframeAPIReady
+                    ytApiReadyResolvers.push(resolve);
+                });
+            }).then(function() {
+                var player = new YT.Player($div[0], {
+                    host: 'https://www.youtube-nocookie.com',
+                    videoId: id,
+                    playerVars: playerVars(),
+                    events: {
+                        onReady: function(e) {
+                            var p = e.target;
+                            try { p.mute(); } catch(e) {}
+                            forceIdle(p);
+                            $wrap.css('pointer-events', '');
+                            bindHover($wrap, p);
+                            if (trigger === 'hover') {
+                                $wrap.addClass('is-playing');
+                                p.playVideo();
+                            }
+                        },
+                        onStateChange: function(e) {
+                            if ((e.data === YT.PlayerState.PLAYING || e.data === YT.PlayerState.BUFFERING) && !$wrap.is('.is-playing')) {
+                                forceIdle(e.target);
+                            }
+                        }
                     }
-                }
-            }
-        });
+                });
+            });
+        }
+
+        $wrap.on('mouseenter', function() { ensurePlayer('hover'); });
+        $wrap.on('click touchstart', function() { ensurePlayer('click'); });
     });
 }
 
 window.onYouTubeIframeAPIReady = function() {
-    initHoverPlayers();
+    ytApiReady = true;
+    var pending = ytApiReadyResolvers.splice(0);
+    for (var i = 0; i < pending.length; i++) pending[i]();
 };
+
+// Prepare placeholders immediately; players will be created on demand
+initHoverPlayers();
 });
