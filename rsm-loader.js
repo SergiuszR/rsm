@@ -6,9 +6,39 @@
 (function() {
     'use strict';
     
+    // Auto-detect baseURL based on current domain
+    function getBaseURL() {
+        const hostname = window.location.hostname;
+        
+        // Development environment (Netlify branch deploys)
+        if (hostname.includes('development--rsm-project.netlify.app')) {
+            return 'https://development--rsm-project.netlify.app';
+        }
+        
+        // Staging or other branch deploys (pattern: branchname--rsm-project.netlify.app)
+        if (hostname.includes('--rsm-project.netlify.app')) {
+            return `https://${hostname}`;
+        }
+        
+        // Production
+        if (hostname.includes('rsm-project.netlify.app')) {
+            return 'https://rsm-project.netlify.app';
+        }
+        
+        // Local development - load from production as fallback
+        // (or you could set up a local server and return the local URL)
+        if (hostname === 'localhost' || hostname === '127.0.0.1') {
+            console.warn('Running on localhost - loading scripts from production');
+            return 'https://rsm-project.netlify.app';
+        }
+        
+        // Custom domain or unknown - use current origin
+        return window.location.origin;
+    }
+    
     // Create RSM object immediately
     window.RSM = {
-        baseURL: 'https://rsm-project.netlify.app',
+        baseURL: getBaseURL(),
         loaded: new Set(),
         
         // Load a single script

@@ -85,6 +85,12 @@ Each file now:
 - Added `anim-init.js` as the **first** global script to load
 - Ensures animation manager is available before any animations initialize
 - Maintains proper loading order: anim-init → other globals → page-specific scripts
+- **Made baseURL dynamic** (v2 fix) - auto-detects environment:
+  - `development--rsm-project.netlify.app` → loads from development
+  - `branchname--rsm-project.netlify.app` → loads from that branch
+  - `rsm-project.netlify.app` → loads from production
+  - Custom domains → uses current origin
+  - This ensures each branch loads its own scripts, not production scripts
 
 ---
 

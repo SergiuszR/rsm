@@ -69,6 +69,12 @@ Time: ~300ms after all scripts load
 
 ## Files Fixed (v2)
 
+### Loader Script (Critical environment fix)
+- ✅ `rsm-loader.js` - Made baseURL dynamic to auto-detect environment
+  - Development branch now loads from `development--rsm-project.netlify.app`
+  - Production loads from `rsm-project.netlify.app`
+  - Prevents development from loading production scripts
+
 ### Global Scripts (These were missing in v1)
 - ✅ `js/global/navbar.js` - Now waits for GSAP properly
 - ✅ `js/global/navbar-anim.js` - Now waits for GSAP properly
