@@ -75,7 +75,7 @@
         cards.forEach((card, index) => {
             card.style.position = 'sticky';
             card.style.top = `${topEdge}px`;
-            card.style.height = '45em';
+            // card.style.height = '45em';
             card.style.display = 'flex';
             card.style.alignItems = 'center';
             card.style.justifyContent = 'center';
