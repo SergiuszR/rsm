@@ -14,10 +14,18 @@ if (isDesktop) {
         autoRaf: false,
     });
 
+    // Stop lenis initially
+    lenis.stop();
+
     function raf(time) {
         lenis.raf(time);
         requestAnimationFrame(raf);
     }
 
     requestAnimationFrame(raf);
+
+    // Start lenis after document is fully loaded
+    window.addEventListener('load', function() {
+        lenis.start();
+    });
 }

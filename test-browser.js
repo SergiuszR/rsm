@@ -18,7 +18,7 @@ const path = require('path');
 const CONFIG = {
   // URL to test - can be overridden with --url flag
   url: process.argv.find(arg => arg.startsWith('--url='))?.split('=')[1] || 
-       'https://robimy-social-media-dev.webflow.io/?rsm-branch=development',
+       'https://robimy-social-media-dev.webflow.io/',
   
   // Branch to test - can be overridden with --branch flag
   branch: process.argv.find(arg => arg.startsWith('--branch='))?.split('=')[1] || 'development',
