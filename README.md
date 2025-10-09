@@ -162,3 +162,74 @@ npm run dev
 # Build for production
 npm run build
 ```
+
+## 🧪 Automated Testing
+
+This project includes an automated browser testing tool that can check for console errors, verify animations, and test performance.
+
+### Quick Start
+
+```bash
+# Install dependencies (includes Puppeteer)
+npm install
+
+# Run tests on development branch
+npm test
+
+# Analyze results
+npm run analyze
+
+# View detailed report
+open test-results/latest-report.html
+```
+
+### Available Test Commands
+
+```bash
+# Test development branch (default)
+npm run test:dev
+
+# Test production branch
+npm run test:prod
+
+# Analyze test results in terminal
+npm run analyze
+```
+
+### What Gets Tested
+
+- ✅ Console errors and warnings
+- ✅ JavaScript exceptions
+- ✅ Network request failures
+- ✅ GSAP/ScrollTrigger loading
+- ✅ AnimationManager initialization
+- ✅ Page performance metrics
+- ✅ Mobile responsiveness
+- ✅ Scroll behavior
+
+### Using with AI Assistant
+
+After running tests, you can ask your AI assistant to analyze and fix issues:
+
+```bash
+# 1. Run tests
+npm test
+
+# 2. Ask AI to analyze
+"Please read test-results/latest-results.json and fix any errors"
+```
+
+The AI will:
+1. Read the test results
+2. Identify all errors with their locations
+3. Analyze root causes
+4. Fix the issues in your code
+5. You can re-run tests to verify
+
+### Test Output Files
+
+- `test-results/latest-report.html` - Beautiful HTML report
+- `test-results/latest-results.json` - Structured data for AI/automation
+- `test-results/screenshot-*.png` - Visual snapshots
+
+For detailed documentation, see [AUTOMATED_TESTING.md](./AUTOMATED_TESTING.md)

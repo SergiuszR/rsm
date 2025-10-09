@@ -7,11 +7,17 @@
     "build": "npm run copy-files",
     "copy-files": "mkdir -p dist && cp -r js dist/ && cp rsm-loader.js dist/ && cp homepage-loader.js dist/",
     "dev": "npm run copy-files && python3 -m http.server 5000",
-    "deploy": "npm run build"
+    "deploy": "npm run build",
+    "test": "node test-browser.js",
+    "test:dev": "node test-browser.js --branch=development",
+    "test:prod": "node test-browser.js --branch=production --url=https://robimy-social-media-dev.webflow.io/",
+    "analyze": "node analyze-test-results.js"
   },
   "keywords": ["webflow", "netlify", "script-loader", "javascript"],
   "author": "",
   "license": "ISC",
-  "devDependencies": {},
+  "devDependencies": {
+    "puppeteer": "^21.5.2"
+  },
   "dependencies": {}
 }

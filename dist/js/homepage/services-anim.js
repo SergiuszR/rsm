@@ -19,7 +19,7 @@ $(document).ready(function() {
   const tl = gsap.timeline({
     scrollTrigger: {
       trigger: ".section_services",
-      start: "top 50%",
+      start: "top 80%",
       end: "bottom 20%",
       toggleActions: "play none none reverse"
     }
@@ -34,8 +34,8 @@ $(document).ready(function() {
     {
       opacity: 1,
       x: 0,
-      duration: 1.2,
-      stagger: 0.4,
+      duration: 0.8,
+      stagger: 0.2,
       ease: "power2.out"
     }
   );
