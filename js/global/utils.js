@@ -92,8 +92,8 @@ $(document).ready(function() {
         initialSlide: 0,
 
         breakpoints: {
-            0: { slidesPerView: 1.05 },
-            769: { slidesPerView: 'auto' }
+            0: { slidesPerView: 1 },
+            769: { slidesPerView: 2 }
         },
 
         navigation: {
