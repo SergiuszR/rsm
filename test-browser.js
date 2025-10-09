@@ -6,9 +6,11 @@
  * This tool launches a headless browser, visits your Webflow page,
  * captures console errors/warnings, and saves results to a file
  * that can be analyzed by AI or developers.
+ * 
+ * Uses Playwright for modern, reliable browser automation
  */
 
-const puppeteer = require('puppeteer');
+const { chromium } = require('playwright');
 const fs = require('fs').promises;
 const path = require('path');
 
@@ -64,19 +66,14 @@ class BrowserTester {
     // Ensure output directory exists
     await fs.mkdir(CONFIG.outputDir, { recursive: true });
 
-    // Launch browser
-    this.browser = await puppeteer.launch({
-      headless: 'new',
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-web-security',
-        '--disable-features=IsolateOrigins,site-per-process'
-      ]
+    // Launch browser with Playwright
+    this.browser = await chromium.launch({
+      headless: true
     });
 
-    this.page = await this.browser.newPage();
-    await this.page.setViewport(CONFIG.viewport);
+    this.page = await this.browser.newPage({
+      viewport: CONFIG.viewport
+    });
 
     // Set up listeners
     this.setupListeners();
@@ -125,12 +122,12 @@ class BrowserTester {
       const errorEntry = {
         url: request.url(),
         method: request.method(),
-        errorText: request.failure()?.errorText,
+        errorText: request.failure()?.errorText || 'Unknown error',
         timestamp: new Date().toISOString()
       };
       
       this.results.networkErrors.push(errorEntry);
-      console.log(`🌐 Network Error: ${request.url()} - ${request.failure()?.errorText}`);
+      console.log(`🌐 Network Error: ${request.url()} - ${errorEntry.errorText}`);
     });
   }
 
@@ -141,7 +138,7 @@ class BrowserTester {
     
     try {
       await this.page.goto(CONFIG.url, {
-        waitUntil: 'networkidle2',
+        waitUntil: 'networkidle',
         timeout: CONFIG.timeout
       });
       
@@ -255,11 +252,9 @@ class BrowserTester {
   async testMobileView() {
     console.log('\n📱 Testing mobile view...');
     
-    await this.page.setViewport({
+    await this.page.setViewportSize({
       width: 375,
-      height: 812,
-      isMobile: true,
-      hasTouch: true
+      height: 812
     });
 
     await this.page.waitForTimeout(2000);
@@ -274,25 +269,26 @@ class BrowserTester {
     console.log(`  ✓ Mobile screenshot: ${mobilePath}`);
 
     // Reset to desktop view
-    await this.page.setViewport(CONFIG.viewport);
+    await this.page.setViewportSize(CONFIG.viewport);
   }
 
   async getPerformanceMetrics() {
     console.log('\n⚡ Gathering performance metrics...');
     
-    const metrics = await this.page.metrics();
     const performanceTiming = await this.page.evaluate(() => {
       const timing = window.performance.timing;
+      const nav = window.performance.getEntriesByType('navigation')[0];
       return {
         domContentLoaded: timing.domContentLoadedEventEnd - timing.navigationStart,
         loadComplete: timing.loadEventEnd - timing.navigationStart,
-        domInteractive: timing.domInteractive - timing.navigationStart
+        domInteractive: timing.domInteractive - timing.navigationStart,
+        firstPaint: nav?.fetchStart || 0,
+        responseTime: timing.responseEnd - timing.requestStart
       };
     });
 
     this.results.performance = {
       ...this.results.performance,
-      ...metrics,
       ...performanceTiming
     };
 

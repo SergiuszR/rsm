@@ -10,7 +10,7 @@ This testing tool allows you (or AI) to automatically test your Webflow site, ca
 npm install
 ```
 
-This will install Puppeteer, which includes a headless Chrome browser.
+This will install Playwright, a modern browser automation tool that includes Chromium.
 
 ### 2. Run Tests
 
@@ -201,7 +201,7 @@ npm test
 
 ## 🐛 Troubleshooting
 
-### "Cannot find module 'puppeteer'"
+### "Cannot find module '@playwright/test'"
 ```bash
 npm install
 ```
@@ -218,15 +218,14 @@ The directory is created automatically. If it fails:
 mkdir -p test-results
 ```
 
-### Headless browser won't launch (Linux)
-Install dependencies:
+### Browser won't launch (Linux)
+Install system dependencies:
 ```bash
-# Ubuntu/Debian
-sudo apt-get install -y chromium-browser
+# Install Playwright browsers
+npx playwright install chromium
 
-# Or let Puppeteer use system Chrome
-export PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
-export PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+# Or install system dependencies
+npx playwright install-deps
 ```
 
 ## 🎯 Example Workflow

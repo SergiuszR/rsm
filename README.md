@@ -170,7 +170,7 @@ This project includes an automated browser testing tool that can check for conso
 ### Quick Start
 
 ```bash
-# Install dependencies (includes Puppeteer)
+# Install dependencies (includes Playwright)
 npm install
 
 # Run tests on development branch

@@ -7,7 +7,7 @@ This testing tool launches a real browser, visits your Webflow page, and capture
 ## Install & Run (2 Commands)
 
 ```bash
-# 1. Install Puppeteer (headless browser)
+# 1. Install Playwright (modern browser automation)
 npm install
 
 # 2. Run the tests
