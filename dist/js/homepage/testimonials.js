@@ -344,7 +344,7 @@ $(document).ready(function() {
       };
 
       new Swiper(containerEl, {
-        slidesPerView: window.innerWidth <= 768 ? 1.1 : 1.2,
+        slidesPerView: window.innerWidth <= 768 ? 1.05 : 1.05,
         spaceBetween: 16,
         centeredSlides: false,
         loop: false,

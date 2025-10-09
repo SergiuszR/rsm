@@ -139,7 +139,7 @@
         };
 
         swiper = new Swiper(container, {
-            slidesPerView: 1.2,
+            slidesPerView: 1.05,
             spaceBetween: 16,
             centeredSlides: false,
             loop: false,
