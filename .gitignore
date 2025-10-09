@@ -7,9 +7,11 @@ node_modules/
 # Build outputs
 /dist/
 
-# Allow select dist files if needed
+# Allow select dist files if needed (minified production files + source maps)
 !/dist/rsm-loader.js
+!/dist/rsm-loader.js.map
 !/dist/homepage-loader.js
+!/dist/homepage-loader.js.map
 !/dist/js/
 
 # Logs
