@@ -60,12 +60,12 @@
             const urlParams = new URLSearchParams(window.location.search);
             const baseOverride = urlParams.get('rsm-base');
             if (baseOverride) {
-                console.log('RSM Loader: Using explicit base override from URL:', baseOverride);
+                // console.log('RSM Loader: Using explicit base override from URL:', baseOverride);
                 return baseOverride.replace(/\/$/, '');
             }
         } catch (e) {}
         if (window.RSM_BASE_URL && typeof window.RSM_BASE_URL === 'string') {
-            console.log('RSM Loader: Using explicit base override from window.RSM_BASE_URL:', window.RSM_BASE_URL);
+            // console.log('RSM Loader: Using explicit base override from window.RSM_BASE_URL:', window.RSM_BASE_URL);
             return window.RSM_BASE_URL.replace(/\/$/, '');
         }
         // Check for URL parameter to override (for testing)
@@ -74,29 +74,29 @@
         const branchParam = urlParams.get('rsm-branch');
         
         if (branchParam === 'development') {
-            console.log('RSM Loader: Loading from DEVELOPMENT branch (via URL parameter)');
+            // console.log('RSM Loader: Loading from DEVELOPMENT branch (via URL parameter)');
             return 'https://development--rsm-project.netlify.app';
         }
         
         if (branchParam === 'main' || branchParam === 'production') {
-            console.log('RSM Loader: Loading from PRODUCTION branch (via URL parameter)');
+            // console.log('RSM Loader: Loading from PRODUCTION branch (via URL parameter)');
             return 'https://rsm-project.netlify.app';
         }
         
         // Check for global config variable (can be set in Webflow custom code)
         // Add to Webflow: <script>window.RSM_BRANCH = 'development';</script>
         if (window.RSM_BRANCH === 'development') {
-            console.log('RSM Loader: Loading from DEVELOPMENT branch (via RSM_BRANCH config)');
+            // console.log('RSM Loader: Loading from DEVELOPMENT branch (via RSM_BRANCH config)');
             return 'https://development--rsm-project.netlify.app';
         }
         
         if (window.RSM_BRANCH === 'main' || window.RSM_BRANCH === 'production') {
-            console.log('RSM Loader: Loading from PRODUCTION branch (via RSM_BRANCH config)');
+            // console.log('RSM Loader: Loading from PRODUCTION branch (via RSM_BRANCH config)');
             return 'https://rsm-project.netlify.app';
         }
         
         // Default to production
-        console.log('RSM Loader: Loading from PRODUCTION branch (default)');
+        // console.log('RSM Loader: Loading from PRODUCTION branch (default)');
         return 'https://rsm-project.netlify.app';
     }
     
