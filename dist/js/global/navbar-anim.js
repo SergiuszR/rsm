@@ -144,16 +144,27 @@ function updateNavbarContrast() {
 }
 
 // Set up ScrollTrigger
+// For mobile: add invalidateOnRefresh to handle mobile scroll issues
 ScrollTrigger.create({
   trigger: "body",
   start: "top top",
   end: "bottom bottom",
   onUpdate: updateNavbarContrast,
-  onRefresh: updateNavbarContrast
+  onRefresh: updateNavbarContrast,
+  invalidateOnRefresh: true,
+  // Mobile-specific: force refresh on scroll for better compatibility
+  scrub: 0
 });
 
         // Initial setup
         updateNavbarContrast();
+        
+        // Additional mobile fix: listen to native scroll events as fallback
+        let scrollTimeout;
+        window.addEventListener('scroll', function() {
+          clearTimeout(scrollTimeout);
+          scrollTimeout = setTimeout(updateNavbarContrast, 50);
+        }, { passive: true });
         }
     })();
 });

@@ -24,6 +24,14 @@ if (isDesktop) {
 
     requestAnimationFrame(raf);
 
+    // Integrate Lenis with ScrollTrigger
+    // This ensures ScrollTrigger updates when Lenis scrolls
+    lenis.on('scroll', () => {
+        if (window.ScrollTrigger) {
+            ScrollTrigger.update();
+        }
+    });
+
     // Start lenis after document is fully loaded
     window.addEventListener('load', function() {
         lenis.start();

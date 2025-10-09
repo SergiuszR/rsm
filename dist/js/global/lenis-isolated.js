@@ -30,6 +30,14 @@
 
             requestAnimationFrame(raf);
             
+            // Integrate Lenis with ScrollTrigger
+            // This ensures ScrollTrigger updates when Lenis scrolls
+            lenis.on('scroll', () => {
+                if (window.ScrollTrigger) {
+                    ScrollTrigger.update();
+                }
+            });
+            
             console.log('[Isolated Lenis] Smooth scroll initialized');
         } else {
             console.log('[Isolated Lenis] Mobile detected, skipping smooth scroll');
