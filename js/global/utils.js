@@ -171,25 +171,57 @@ $(document).ready(function() {
 //   Section decor animation
 
 
-gsap.from("[data-decor='timeline']", {
-    x: 200,
-    duration: 0.8,
-    ease: "back.out(2.4)",
-    scrollTrigger: {
-      trigger: "[data-decor='timeline']",
-      start: 'top 85%', 
-      once: true
+// Ensure GSAP/ScrollTrigger are ready before initializing
+(function waitForAnimationManagerDecor() {
+    function initDecorAnimations() {
+        if (!window.gsap || !window.ScrollTrigger) {
+            console.warn('GSAP or ScrollTrigger not loaded for section decor animations');
+            return;
+        }
+
+        gsap.from("[data-decor='timeline']", {
+            x: 200,
+            duration: 0.8,
+            ease: "back.out(2.4)",
+            scrollTrigger: {
+                trigger: "[data-decor='timeline']",
+                start: 'top 85%',
+                once: true
+            }
+        });
+
+        gsap.from("[data-decor='portfolio']", {
+            x: -200,
+            y: -100,
+            duration: 0.8,
+            ease: "back.out(2.4)",
+            scrollTrigger: {
+                trigger: "[data-decor='portfolio']",
+                start: 'bottom 30%',
+                once: true
+            }
+        });
+
+        // Safety: refresh after a short delay to ensure positions are correct
+        if (window.ScrollTrigger) {
+            setTimeout(function() { try { ScrollTrigger.refresh(); } catch (e) {} }, 200);
+        }
     }
-  });
-  
-  gsap.from("[data-decor='portfolio']", {
-    x: -200,
-    y: -100,
-    duration: 0.8,
-    ease: "back.out(2.4)",
-    scrollTrigger: {
-      trigger: "[data-decor='portfolio']",
-      start: 'bottom 30%', 
-      once: true
+
+    if (window.AnimationManager && typeof window.AnimationManager.onReady === 'function') {
+        window.AnimationManager.onReady(initDecorAnimations);
+    } else {
+        let attempts = 0;
+        const maxAttempts = 100; // 5s
+        const timer = setInterval(function() {
+            attempts++;
+            if (window.AnimationManager && typeof window.AnimationManager.onReady === 'function') {
+                clearInterval(timer);
+                window.AnimationManager.onReady(initDecorAnimations);
+            } else if (attempts >= maxAttempts) {
+                clearInterval(timer);
+                console.error('AnimationManager not loaded for section decor animations');
+            }
+        }, 50);
     }
-  });
+})();
