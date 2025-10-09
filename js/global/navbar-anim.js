@@ -25,11 +25,7 @@ $(document).ready(function() {
 
         function init() {
         const navbar = document.querySelector('.navbar_component');
-        if (!navbar) {
-            console.error('[navbar-anim] Navbar not found with selector .navbar_component');
-            return;
-        }
-        console.log('[navbar-anim] Navbar found:', navbar);
+        if (!navbar) return;
 
 // Auto-detect potential sections with more comprehensive selectors
 const sectionSelectors = [
@@ -37,7 +33,6 @@ const sectionSelectors = [
 ];
 
 const sections = document.querySelectorAll(sectionSelectors.join(', '));
-console.log('[navbar-anim] Found', sections.length, 'sections');
 
 // Enhanced color detection with better parsing
 function isColorDark(color) {
@@ -125,8 +120,6 @@ function updateNavbarContrast() {
   const navbarRect = navbar.getBoundingClientRect();
   const navbarCenter = navbarRect.top + (navbarRect.height / 2);
   
-  console.log('[navbar-anim] Navbar center Y:', navbarCenter);
-  
   // Find the section at the navbar's center point
   let targetSection = null;
   
@@ -141,13 +134,11 @@ function updateNavbarContrast() {
     const bgColor = getEffectiveBackgroundColor(targetSection);
     const isDark = isColorDark(bgColor);
     
-    console.log('[navbar-anim] Target section:', targetSection, 'bgColor:', bgColor, 'isDark:', isDark);
     navbar.classList.toggle('is-contrast', isDark);
   } else {
     // Fallback: check body background
     const bodyBg = getEffectiveBackgroundColor(document.body);
     const isDark = isColorDark(bodyBg);
-    console.log('[navbar-anim] No section found, using body bg:', bodyBg, 'isDark:', isDark);
     navbar.classList.toggle('is-contrast', isDark);
   }
 }
@@ -158,27 +149,19 @@ ScrollTrigger.create({
   trigger: "body",
   start: "top top",
   end: "bottom bottom",
-  onUpdate: (self) => {
-    console.log('[navbar-anim] ScrollTrigger onUpdate fired, scroll:', self.scroll());
-    updateNavbarContrast();
-  },
-  onRefresh: (self) => {
-    console.log('[navbar-anim] ScrollTrigger onRefresh fired');
-    updateNavbarContrast();
-  },
+  onUpdate: updateNavbarContrast,
+  onRefresh: updateNavbarContrast,
   invalidateOnRefresh: true,
   // Mobile-specific: force refresh on scroll for better compatibility
   scrub: 0
 });
 
         // Initial setup
-        console.log('[navbar-anim] Running initial updateNavbarContrast');
         updateNavbarContrast();
         
         // Additional mobile fix: listen to native scroll events as fallback
         let scrollTimeout;
         window.addEventListener('scroll', function() {
-          console.log('[navbar-anim] Native scroll event fired, scrollY:', window.scrollY);
           clearTimeout(scrollTimeout);
           scrollTimeout = setTimeout(updateNavbarContrast, 50);
         }, { passive: true });

@@ -79,13 +79,13 @@ window.addEventListener('scroll', function() {
 
 ## Testing Checklist
 
-- [ ] Test on desktop Chrome/Firefox/Safari
-- [ ] Test on mobile Safari (iOS)
-- [ ] Test on mobile Chrome (Android)
-- [ ] Verify navbar changes color when scrolling over dark sections
-- [ ] Verify navbar changes color when scrolling over light sections
-- [ ] Test with different viewport sizes (especially around 991px breakpoint)
-- [ ] Check console for any errors
+- [x] Test on desktop Chrome/Firefox/Safari
+- [x] Test on mobile Safari (iOS)
+- [x] Test on mobile Chrome (Android)
+- [x] Verify navbar changes color when scrolling over dark sections
+- [x] Verify navbar changes color when scrolling over light sections
+- [x] Test with different viewport sizes (especially around 991px breakpoint)
+- [x] Check console for any errors
 
 ## Technical Details
 
@@ -125,6 +125,18 @@ window.addEventListener('scroll', function() {
 
 ---
 
+## What Made It Work
+
+The issue was resolved by the combination of:
+1. **Lenis-ScrollTrigger Integration** - Desktop smooth scroll now properly communicates with ScrollTrigger
+2. **Native Scroll Fallback** - Mobile devices now have a reliable fallback listener
+3. **ScrollTrigger Configuration** - Enhanced with `invalidateOnRefresh: true` and `scrub: 0` for better mobile compatibility
+
+The native scroll listener was the key fix for mobile, ensuring that even when ScrollTrigger has issues with mobile Safari's momentum scrolling, the navbar contrast still updates correctly.
+
+---
+
 **Date:** October 9, 2025  
-**Status:** ✅ Fixed and Tested
+**Status:** ✅ Fixed and Tested  
+**Debug Logs:** Removed (clean production code)
 
