@@ -27,7 +27,9 @@ $(document).ready(function () {
 
         if ($navbar.length > 0) {
         let lastY = 0;
-        const threshold = 5;
+        const hideThreshold = 5; // Amount to scroll down before hiding
+        const showVelocity = 3; // Velocity threshold for dynamic upward scroll/swipe
+        const minScrollPos = 100; // Minimum scroll position before hiding navbar
 
         ScrollTrigger.create({
             start: "top top",
@@ -35,25 +37,25 @@ $(document).ready(function () {
             onUpdate: self => {
                 const currentY = self.scroll();
                 const scrollDiff = currentY - lastY;
+                const velocity = self.getVelocity(); // Get scroll velocity
                 const isBannerVisible = $banner.length > 0 && $banner.css('display') !== 'none';
 
-                if (Math.abs(scrollDiff) > threshold) {
-                    if (scrollDiff > 0 && currentY > 50) {
-                        // Scrolling down
-                        if (!$navbar.hasClass('is-pinned')) {
-                            $navbar.addClass('is-pinned');
-                            gsap.to($navbar, { y: -$navbar.outerHeight(), duration: 0.3, ease: "power2.out" });
-                        }
-                    } else if (scrollDiff < 0) {
-                        // Scrolling up
-                        if ($navbar.hasClass('is-pinned')) {
-                            $navbar.removeClass('is-pinned');
-                            gsap.to($navbar, { y: 0, duration: 0.3, ease: "power2.out" });
-                        }
+                // Scrolling DOWN - hide navbar with threshold
+                if (scrollDiff > hideThreshold && currentY > minScrollPos) {
+                    if (!$navbar.hasClass('is-pinned')) {
+                        $navbar.addClass('is-pinned');
+                        gsap.to($navbar, { y: -$navbar.outerHeight(), duration: 0.3, ease: "power2.out" });
                     }
-
-                    lastY = currentY;
+                } 
+                // Dynamic UPWARD scroll/swipe - detect velocity
+                else if (velocity < -showVelocity) {
+                    if ($navbar.hasClass('is-pinned')) {
+                        $navbar.removeClass('is-pinned');
+                        gsap.to($navbar, { y: 0, duration: 0.3, ease: "power2.out" });
+                    }
                 }
+
+                lastY = currentY;
             }
         });
         }
