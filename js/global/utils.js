@@ -93,7 +93,7 @@ $(document).ready(function() {
 
         breakpoints: {
             0: { slidesPerView: 1 },
-            769: { slidesPerView: 2 }
+            769: { slidesPerView: 1.1 }
         },
 
         navigation: {
