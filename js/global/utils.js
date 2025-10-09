@@ -90,12 +90,7 @@ $(document).ready(function() {
         spaceBetween: 24,
         loop: false,
         initialSlide: 0,
-
-        breakpoints: {
-            0: { slidesPerView: 1 },
-            769: { slidesPerView: 1.1 }
-        },
-
+        slidesPerView: window.innerWidth >= 768 ? 2 : 1.1,
         navigation: {
             nextEl: '.swiper_control.is-next',
             prevEl: '.swiper_control.is-prev',
