@@ -47,11 +47,12 @@
                     gsap.registerPlugin(ScrollTrigger);
                     
                     // Run all ready callbacks
-                    this.readyCallbacks.forEach(callback => {
+                    this.readyCallbacks.forEach((callback, index) => {
                         try {
                             callback();
                         } catch (e) {
-                            console.error('Animation callback error:', e);
+                            console.error(`Animation callback error (callback #${index}):`, e);
+                            // Continue with other callbacks even if one fails
                         }
                     });
                     
