@@ -225,3 +225,54 @@ $(document).ready(function() {
         }, 50);
     }
 })();
+
+// Remove rdundant attr from video elements
+
+$(document).ready(function() {
+  $('video').each(function() {
+    var autoplayAttr = $(this).attr('autoplay');
+    
+    if (autoplayAttr === '' || autoplayAttr === undefined) {
+      $(this).removeAttr('autoplay');
+    }
+  });
+});
+
+
+// Modal logic
+
+$(document).ready(function() {
+
+  $('[data-video-container]').click(function(e) {
+    e.stopPropagation()
+    $('.video_overlay').addClass('show');
+  });
+  
+
+  $('[data-video-close]').click(function(e) {
+  	e.stopPropagation();
+  	e.preventDefault();
+    $('.video_overlay').removeClass('show');
+  });
+  
+
+  $(document).click(function(e) {
+    if ($('.video_overlay').hasClass('show') && 
+        !$(e.target).closest('.video_overlay').length &&
+        !$(e.target).closest('[data-video-container]').length) {
+      $('.video_overlay').removeClass('show');
+    }
+  });
+  
+
+  $('.video_overlay').click(function(e) {
+    e.stopPropagation();
+  });
+  
+
+  $(document).keydown(function(e) {
+    if (e.key === 'Escape' || e.keyCode === 27) {
+      $('.video_overlay').removeClass('show');
+    }
+  });
+});

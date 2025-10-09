@@ -19,11 +19,21 @@ $(document).ready(function() {
     const marqueeWidth = marqueeEl.scrollWidth;
     const threshold = 200;
 
+    // Clone the inner wrapper for seamless loop
+    const clone = firstInner.cloneNode(true);
+    wrapper.appendChild(clone);
+
+    // Animate for seamless infinite marquee
+    // Move exactly one marquee width, then reset seamlessly
+    gsap.set(wrapper, { x: 0 });
     gsap.to(wrapper, {
       x: -marqueeWidth,
       duration: 20,
       ease: "none",
-      repeat: -1
+      repeat: -1,
+      modifiers: {
+        x: gsap.utils.unitify(x => parseFloat(x) % marqueeWidth)
+      }
     });
 
 
