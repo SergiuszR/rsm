@@ -49,7 +49,7 @@
     });
 
     // Initial delay
-    tl.to({}, { duration: 1.5 });
+    tl.to({}, { duration: 0.5 });
 
     // Phase 1: Erase the original text letter by letter
     for (let i = fromText.length; i >= 0; i--) {
@@ -57,54 +57,19 @@
             fromEl.textContent = fromText.substring(0, i);
             fromEl.appendChild(cursor);
         });
-        tl.to({}, { duration: 0.05 });
+        tl.to({}, { duration: 0.03 });
     }
 
     // Small pause after erasing
-    tl.to({}, { duration: 0.5 });
+    tl.to({}, { duration: 0.2 });
 
-    // Phase 2: Type new text with a typo in the last word
-    const lastSpaceIndex = toText.lastIndexOf(" ");
-    const lastWordStart = lastSpaceIndex !== -1 ? lastSpaceIndex + 1 : 0;
-    const typoPosition = lastWordStart + Math.floor((toText.length - lastWordStart) * 0.5); // Typo in middle of last word
-    const typoChar = "x"; // The typo character
-    
-    // Type until typo position
-    for (let i = 1; i <= typoPosition; i++) {
+    // Phase 2: Type new text
+    for (let i = 1; i <= toText.length; i++) {
         tl.call(() => {
             fromEl.textContent = toText.substring(0, i);
             fromEl.appendChild(cursor);
         });
-        tl.to({}, { duration: 0.08 });
-    }
-
-    // Add the typo character
-    tl.call(() => {
-        fromEl.textContent = toText.substring(0, typoPosition) + typoChar;
-        fromEl.appendChild(cursor);
-    });
-    tl.to({}, { duration: 0.08 });
-
-    // Pause (realize the mistake)
-    tl.to({}, { duration: 0.6 });
-
-    // Backspace the typo
-    tl.call(() => {
-        fromEl.textContent = toText.substring(0, typoPosition);
-        fromEl.appendChild(cursor);
-    });
-    tl.to({}, { duration: 0.08 });
-
-    // Small pause before continuing
-    tl.to({}, { duration: 0.3 });
-
-    // Continue typing correctly
-    for (let i = typoPosition + 1; i <= toText.length; i++) {
-        tl.call(() => {
-            fromEl.textContent = toText.substring(0, i);
-            fromEl.appendChild(cursor);
-        });
-        tl.to({}, { duration: 0.08 });
+        tl.to({}, { duration: 0.04 });
     }
 
     // Remove cursor and show rest of content
