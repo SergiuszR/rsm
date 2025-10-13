@@ -91,8 +91,6 @@ $(document).ready(function() {
                     progress: targetProgress,
                     duration: 0.5,
                     ease: 'power2.out',
-                    onUpdate: updateDotPosition,
-                    onComplete: updateDotPosition
                 });
             },
             onLeaveBack: () => {
@@ -117,20 +115,16 @@ $(document).ready(function() {
                 gsap.to(masterTl, {
                     progress: prevTargetProgress,
                     duration: 0.3,
-                    onUpdate: updateDotPosition,
-                    onComplete: updateDotPosition
                 });
             }
         });
     });
     
     // Initial positioning
-    updateDotPosition();
+
     
     // Handle window resize - recalculate positions
     $(window).on('resize', function() {
-        updateDotPosition();
-        
         // Update ScrollTrigger positions
         ScrollTrigger.refresh();
     });
