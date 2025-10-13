@@ -16,8 +16,6 @@ $(document).ready(function() {
         const $timelineComponent = $('.timeline_component');
         const $progressLine = $('[data-animation="timeline-progress"]');
         const $timelineRows = $('.timeline_row');
-        const $timelineDot = $('.timeline_dot');
-        const $circleWrappers = $('.timeline_circle-wrapper');
         
         if ($timelineComponent.length === 0 || $progressLine.length === 0) {
             console.warn('Timeline elements not found');
@@ -39,17 +37,6 @@ $(document).ready(function() {
         duration: 1
     });
     
-    // Function to position dot at the end of progress line
-    function updateDotPosition() {
-        const progressLineHeight = $progressLine.height();
-        const containerHeight = progressContainer.height();
-        const progressPercent = (progressLineHeight / containerHeight) * 100;
-        
-        gsap.set($timelineDot[0], { 
-            top: `${progressPercent}%`,
-            y: '-50%'
-        });
-    }
     
     // Calculate target progress for each circle wrapper
     function calculateProgressForCircle($circleWrapper) {
