@@ -271,3 +271,9 @@ $(document).ready(function() {
     }
   });
 });
+
+// Form button mirro
+
+$('#submit').on('click', function(e) {
+  $('#submit-original').trigger('click');
+});
