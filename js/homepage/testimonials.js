@@ -412,7 +412,7 @@ $(document).ready(function() {
       }, 50);
     }
   })();
-
+/*
   function initReelsAnimation() {
       if (!window.gsap || !window.ScrollTrigger) {
         console.warn('GSAP or ScrollTrigger not loaded for reels animation');
@@ -500,5 +500,5 @@ $(document).ready(function() {
             }, 50);
         }
     })();
-
+*/
 });
