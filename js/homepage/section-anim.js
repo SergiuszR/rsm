@@ -69,7 +69,7 @@
             fromEl.textContent = toText.substring(0, i);
             fromEl.appendChild(cursor);
         });
-        tl.to({}, { duration: 0.04 });
+        tl.to({}, { duration: 0.05 });
     }
 
     // Remove cursor and show rest of content
