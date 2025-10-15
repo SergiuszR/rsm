@@ -1,3 +1,5 @@
+// Navbar color change on scroll
+
 $(document).ready(function() {
     // Wait for GSAP and ScrollTrigger to be ready
     if (!window.AnimationManager) {
