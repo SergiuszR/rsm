@@ -1,6 +1,6 @@
 $(document).ready(function() {
-    const BREAKPOINT_TABLET = 991;
-    if (window.innerWidth <= BREAKPOINT_TABLET) {
+    const BREAKPOINT_MOBILE = 768;
+    if (window.innerWidth < BREAKPOINT_MOBILE) {
         return;
     }
     
