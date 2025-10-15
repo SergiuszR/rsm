@@ -27,6 +27,9 @@ $(document).ready(function() {
         const navbar = document.querySelector('.navbar_component');
         if (!navbar) return;
 
+// Webflow desktop breakpoint
+const DESKTOP_BREAKPOINT = 992;
+
 // Auto-detect potential sections with more comprehensive selectors
 const sectionSelectors = [
   'section'
@@ -116,7 +119,18 @@ function getEffectiveBackgroundColor(element) {
   return 'rgb(255, 255, 255)'; // Default to white
 }
 
+function isDesktop() {
+  return window.innerWidth >= DESKTOP_BREAKPOINT;
+}
+
 function updateNavbarContrast() {
+  // Only apply contrast logic on desktop breakpoint
+  if (!isDesktop()) {
+    // Remove contrast class on mobile/tablet
+    navbar.classList.remove('is-contrast');
+    return;
+  }
+
   const navbarRect = navbar.getBoundingClientRect();
   const navbarCenter = navbarRect.top + (navbarRect.height / 2);
   
@@ -143,25 +157,51 @@ function updateNavbarContrast() {
   }
 }
 
-// Set up ScrollTrigger
-// For mobile: add invalidateOnRefresh to handle mobile scroll issues
-ScrollTrigger.create({
-  trigger: "body",
-  start: "top top",
-  end: "bottom bottom",
-  onUpdate: updateNavbarContrast,
-  onRefresh: updateNavbarContrast,
-  invalidateOnRefresh: true,
-  // Mobile-specific: force refresh on scroll for better compatibility
-  scrub: 0
-});
+let scrollTriggerInstance = null;
+
+function setupScrollTrigger() {
+  // Kill existing instance if any
+  if (scrollTriggerInstance) {
+    scrollTriggerInstance.kill();
+    scrollTriggerInstance = null;
+  }
+
+  // Only set up ScrollTrigger on desktop
+  if (isDesktop()) {
+    scrollTriggerInstance = ScrollTrigger.create({
+      trigger: "body",
+      start: "top top",
+      end: "bottom bottom",
+      onUpdate: updateNavbarContrast,
+      onRefresh: updateNavbarContrast,
+      invalidateOnRefresh: true,
+      scrub: 0
+    });
+  } else {
+    // Reset navbar on mobile/tablet
+    navbar.classList.remove('is-contrast');
+  }
+}
 
         // Initial setup
+        setupScrollTrigger();
         updateNavbarContrast();
         
-        // Additional mobile fix: listen to native scroll events as fallback
+        // Handle resize to toggle between desktop and mobile behavior
+        let resizeTimeout;
+        window.addEventListener('resize', function() {
+          clearTimeout(resizeTimeout);
+          resizeTimeout = setTimeout(function() {
+            setupScrollTrigger();
+            updateNavbarContrast();
+          }, 150);
+        }, { passive: true });
+
+        // Scroll event listener (only active on desktop)
         let scrollTimeout;
         window.addEventListener('scroll', function() {
+          if (!isDesktop()) return;
+          
           clearTimeout(scrollTimeout);
           scrollTimeout = setTimeout(updateNavbarContrast, 50);
         }, { passive: true });
