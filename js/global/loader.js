@@ -22,7 +22,7 @@ $(function () {
 
     // 2) Promote to its own layer and avoid layout-affecting filters
     $inner.css({ willChange: 'transform', transformOrigin: '50% 50%' });
-    $loader.css({ willChange: 'opacity, clip-path' });
+    $loader.css({ willChange: 'clip-path' });
 
     // 3) Measure longest phrase width using current font and lock min-width on .loader_inner
     (function setMinWidthForInner() {
@@ -142,10 +142,10 @@ $(function () {
         }
 
         // Clean, non-janky exit: no blur or inner scaling
-        gsap.set($loader, { opacity: 1, clipPath: 'inset(0% 0% 0% 0%)' });
+        gsap.set($loader, { clipPath: 'inset(0% 0% 0% 0%)' });
 
         gsap.timeline({ defaults: { ease: 'power3.inOut' } })
-            .to($loader, { duration: 0.75, clipPath: 'inset(0% 0% 100% 0%)', opacity: 0 })
+            .to($loader, { duration: 0.75, clipPath: 'inset(0% 0% 100% 0%)' })
             .add(() => {
                 $loader.removeClass('is-active');
                 $text.text('\u200B');
