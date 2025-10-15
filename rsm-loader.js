@@ -215,7 +215,7 @@
                     'js/homepage/youtube.js',
                     'js/homepage/section-anim.js',
                     'js/homepage/marquee.js',
-                    // 'js/homepage/video.js'
+                    'js/homepage/reels.js'
                 ]
             };
             
