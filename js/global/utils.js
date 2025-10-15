@@ -243,6 +243,14 @@ $(document).ready(function() {
     $('.video_overlay').addClass('show');
   });
   
+  $('[data-video-container]').keydown(function(e) {
+    if (e.key === 'Enter' || e.keyCode === 13) {
+      e.stopPropagation();
+      e.preventDefault();
+      $('.video_overlay').addClass('show');
+    }
+  });
+  
 
   $('[data-video-close]').click(function(e) {
   	e.stopPropagation();
