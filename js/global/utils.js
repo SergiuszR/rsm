@@ -277,3 +277,13 @@ $(document).ready(function() {
 $('#submit').on('click', function(e) {
   $('#submit-original').trigger('click');
 });
+
+// Marquee animation, swing effect
+
+$('.banner_photo-wrapper').each(function(index) {
+    $(this).css({
+      'animation': `swing ${2 + Math.random() * 2}s ease-in-out ${Math.random() * 2}s infinite`,
+      'transform-origin': 'top center'
+    });
+  });
+  
