@@ -1,7 +1,6 @@
 $(document).ready(function() {
     // CONFIGURATION
-    const VIMEO_ACCESS_TOKEN = 'd04f4fb2a88343a3c951d1958bdaf8ec';
-    const MAX_VOLUME = 0.5; 
+    const VIMEO_ACCESS_TOKEN = 'd04f4fb2a88343a3c951d1958bdaf8ec'; 
     
     // Find all video elements in reels section with non-empty video IDs
     const $videoElements = $('[data-section="reels"] [data-video-id]').filter(function() {
@@ -68,35 +67,6 @@ $(document).ready(function() {
                 video.appendChild(source);
                 $element[0].appendChild(video);
                 
-                // Volume fade variables
-                let volumeFadeInterval = null;
-                
-                // Smooth volume fade function
-                function fadeVolume(targetVolume, duration) {
-                    // Clear any existing fade
-                    if (volumeFadeInterval) {
-                        clearInterval(volumeFadeInterval);
-                    }
-                    
-                    const startVolume = video.volume;
-                    const volumeChange = targetVolume - startVolume;
-                    const steps = duration / 10; // 10ms intervals
-                    const volumeStep = volumeChange / steps;
-                    let currentStep = 0;
-                    
-                    volumeFadeInterval = setInterval(function() {
-                        currentStep++;
-                        const newVolume = startVolume + (volumeStep * currentStep);
-                        
-                        if (currentStep >= steps) {
-                            video.volume = targetVolume;
-                            clearInterval(volumeFadeInterval);
-                        } else {
-                            video.volume = Math.max(0, Math.min(1, newVolume));
-                        }
-                    }, 10);
-                }
-                
                 // Multiple play attempts
                 const attemptPlay = function() {
                     video.play().catch(function(error) {
@@ -112,21 +82,6 @@ $(document).ready(function() {
                 
                 // Also try after a delay
                 setTimeout(attemptPlay, 500);
-                
-                // Unmute on hover with smooth fade
-                $element.on('mouseenter', function() {
-                    video.muted = false;
-                    fadeVolume(MAX_VOLUME, 300); // Fade to max volume over 300ms
-                    video.play();
-                });
-                
-                // Mute on leave with smooth fade
-                $element.on('mouseleave', function() {
-                    fadeVolume(0, 200); // Fade to 0 over 200ms
-                    setTimeout(function() {
-                        video.muted = true;
-                    }, 200);
-                });
             }
         });
     });

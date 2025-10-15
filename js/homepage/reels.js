@@ -1,3 +1,5 @@
+// Reels section appear and zoom animation
+
 gsap.registerPlugin(ScrollTrigger, Flip);
 
 const videoGrow = document.querySelector("[data-video-grow]");
