@@ -99,7 +99,8 @@ $(function () {
                 const tl = gsap.timeline({ onComplete: resolve, defaults: { ease: 'none' } });
                 for (let i = current.length; i > 0; i--) {
                     const d = base + Math.random() * jitter;
-                    tl.add(() => { node.textContent = current.slice(0, i - 1); })
+                    // Keep zero-width space instead of empty to prevent layout shift
+                    tl.add(() => { node.textContent = i === 1 ? '\u200B' : current.slice(0, i - 1); })
                       .to({}, { duration: d });
                 }
             } else {
@@ -107,7 +108,8 @@ $(function () {
                 (function step() {
                     if (i <= 0) return resolve();
                     i--;
-                    node.textContent = current.slice(0, i);
+                    // Keep zero-width space instead of empty to prevent layout shift
+                    node.textContent = i === 0 ? '\u200B' : current.slice(0, i);
                     const d = (base + Math.random() * jitter) * 1000;
                     setTimeout(step, d);
                 })();
@@ -135,7 +137,7 @@ $(function () {
     function exitLoader() {
         if (!window.gsap) {
             $loader.removeClass('is-active');
-            $text.empty();
+            $text.text('\u200B');
             return;
         }
 
@@ -146,7 +148,7 @@ $(function () {
             .to($loader, { duration: 0.75, clipPath: 'inset(0% 0% 100% 0%)', opacity: 0 })
             .add(() => {
                 $loader.removeClass('is-active');
-                $text.empty();
+                $text.text('\u200B');
             })
             .set($loader[0], { clearProps: 'all' });
     }
