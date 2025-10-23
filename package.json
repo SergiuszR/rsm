@@ -6,8 +6,8 @@
   "scripts": {
     "build": "node build.js",
     "build:dev": "mkdir -p dist && cp -r js dist/ && cp rsm-loader.js dist/ && cp homepage-loader.js dist/ && cp dev-helper.js dist/",
-    "dev": "npm run build:dev && python3 -m http.server 5000",
-    "dev:localhost": "npm run build:dev && echo 'Starting localhost server on port 5000...' && echo 'Set localStorage.setItem(\"env\", \"true\") in browser console to use localhost files' && python3 -m http.server 5000",
+    "dev": "lsof -ti:5000 | xargs kill -9 2>/dev/null || true && npm run build:dev && python3 -m http.server 5000",
+    "dev:localhost": "lsof -ti:5000 | xargs kill -9 2>/dev/null || true && npm run build:dev && echo 'Starting localhost server on port 5000...' && echo 'Set localStorage.setItem(\"env\", \"true\") in browser console to use localhost files' && python3 -m http.server 5000",
     "deploy": "npm run build",
     "test": "node test-browser.js",
     "test:dev": "node test-browser.js --branch=development",

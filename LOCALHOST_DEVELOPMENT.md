@@ -10,6 +10,7 @@ This project now supports localhost development mode for easier testing and deve
    ```bash
    npm run dev:localhost
    ```
+   *Note: This command automatically kills any existing processes on port 5000 before starting the server.*
 
 2. **Open your browser and navigate to your Webflow site**
 
@@ -31,6 +32,7 @@ This project now supports localhost development mode for easier testing and deve
    ```bash
    npm run dev:localhost
    ```
+   *Note: This command automatically kills any existing processes on port 5000 before starting the server.*
 
 2. **Open browser console and set:**
    ```javascript
@@ -87,9 +89,9 @@ dist/
 
 - **Scripts not loading from localhost:** Check that `localStorage.getItem('env') === 'true'`
 - **Port 5000 in use:** 
-  - Check what's using it: `lsof -ti:5000`
+  - The `npm run dev:localhost` command now automatically kills existing processes on port 5000
+  - If you still have issues, manually check: `lsof -ti:5000`
   - Use alternative port: `python3 -m http.server 5001` and update loader URL
-  - Or kill the process: `kill $(lsof -ti:5000)`
 - **CORS issues:** Make sure your localhost server is running on the correct port
 - **Multiple swipers not working:** Ensure each swiper has unique navigation elements within its container
 
