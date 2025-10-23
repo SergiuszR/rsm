@@ -104,17 +104,17 @@ $(document).ready(function() {
 
             on: {
                 init: function() {
-                    updateArrowStates(container, swiper);
+                    updateArrowStates(container, this);
                     applyA11yRoles(container);
                 },
                 slideChange: function() {
-                    updateArrowStates(container, swiper);
+                    updateArrowStates(container, this);
                 },
                 reachBeginning: function() {
-                    updateArrowStates(container, swiper);
+                    updateArrowStates(container, this);
                 },
                 reachEnd: function() {
-                    updateArrowStates(container, swiper);
+                    updateArrowStates(container, this);
                 },
                 update: function() {
                     applyA11yRoles(container);
