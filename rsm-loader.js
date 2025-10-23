@@ -54,7 +54,16 @@
 
     // Determine which Netlify npm (or custom base) to load scripts from
     function getBaseURL() {
-        // Highest priority: explicit base override
+        // Highest priority: localStorage env flag for localhost development
+        try {
+            const isLocalEnv = localStorage.getItem('env') === 'true';
+            if (isLocalEnv) {
+                // console.log('RSM Loader: Loading from LOCALHOST (via localStorage env=true)');
+                return 'http://localhost:5000';
+            }
+        } catch (e) { }
+
+        // Second priority: explicit base override
         // URL param: ?rsm-base=https://my-host.example.com
         try {
             const urlParams = new URLSearchParams(window.location.search);

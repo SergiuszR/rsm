@@ -33,17 +33,19 @@ $(document).ready(function() {
 });
 
 $(document).ready(function() {
-    const container = document.querySelector('.podcasts_wrapper');
-    if (!container) return;
+    // Initialize all swiper instances on the page
+    const containers = document.querySelectorAll('.podcasts_wrapper');
+    if (containers.length === 0) return;
 
-    let swiper; // Declare swiper variable first
+    const swiperInstances = new Map(); // Store swiper instances by container
 
-    function updateArrowStates() {
+    function updateArrowStates(container, swiper) {
         // Add safety check
         if (!swiper) return;
         
-        const prevArrow = document.querySelector('.swiper_control.is-prev');
-        const nextArrow = document.querySelector('.swiper_control.is-next');
+        // Find arrows within this specific container
+        const prevArrow = container.querySelector('.swiper_control.is-prev');
+        const nextArrow = container.querySelector('.swiper_control.is-next');
         
         if (prevArrow) {
             if (swiper.isBeginning) {
@@ -66,72 +68,77 @@ $(document).ready(function() {
         }
     }
 
-    // Now initialize swiper
-    // Accessibility roles on wrapper and slides
-    try {
+    function applyA11yRoles(container) {
         const wrapperEl = container.querySelector('.showcase_grid');
         if (wrapperEl) wrapperEl.setAttribute('role', 'list');
         const slideEls = container.querySelectorAll('.showcase_item-outer');
         slideEls.forEach(el => el.setAttribute('role', 'listitem'));
-    } catch (e) {}
+    }
 
-    const applyA11yRoles = () => {
-        const wrapperEl = container.querySelector('.showcase_grid');
-        if (wrapperEl) wrapperEl.setAttribute('role', 'list');
-        const slideEls = container.querySelectorAll('.showcase_item-outer');
-        slideEls.forEach(el => el.setAttribute('role', 'listitem'));
-    };
+    // Initialize each swiper instance
+    containers.forEach((container, index) => {
+        // Accessibility roles on wrapper and slides
+        try {
+            applyA11yRoles(container);
+        } catch (e) {}
 
-    swiper = new Swiper(container, {
-        wrapperClass: 'showcase_grid',
-        slideClass: 'showcase_item-outer',
+        const swiper = new Swiper(container, {
+            wrapperClass: 'showcase_grid',
+            slideClass: 'showcase_item-outer',
 
-        slidesPerView: 'auto',
-        spaceBetween: 24,
-        loop: false,
-        initialSlide: 0,
-        slidesPerView: window.innerWidth >= 768 ? 3 : 1.1,
-        navigation: {
-            nextEl: '.swiper_control.is-next',
-            prevEl: '.swiper_control.is-prev',
-        },
-
-        pagination: { enabled: false },
-        grabCursor: true,
-        watchOverflow: true,
-        observer: true,
-        observeParents: true,
-
-        on: {
-            init: function() {
-                updateArrowStates();
-                applyA11yRoles();
+            slidesPerView: 'auto',
+            spaceBetween: 24,
+            loop: false,
+            initialSlide: 0,
+            slidesPerView: window.innerWidth >= 768 ? 3 : 1.1,
+            navigation: {
+                nextEl: container.querySelector('.swiper_control.is-next'),
+                prevEl: container.querySelector('.swiper_control.is-prev'),
             },
-            slideChange: function() {
-                updateArrowStates();
+
+            pagination: { enabled: false },
+            grabCursor: true,
+            watchOverflow: true,
+            observer: true,
+            observeParents: true,
+
+            on: {
+                init: function() {
+                    updateArrowStates(container, swiper);
+                    applyA11yRoles(container);
+                },
+                slideChange: function() {
+                    updateArrowStates(container, swiper);
+                },
+                reachBeginning: function() {
+                    updateArrowStates(container, swiper);
+                },
+                reachEnd: function() {
+                    updateArrowStates(container, swiper);
+                },
+                update: function() {
+                    applyA11yRoles(container);
+                }
             },
-            reachBeginning: function() {
-                updateArrowStates();
-            },
-            reachEnd: function() {
-                updateArrowStates();
-            },
-            update: function() {
-                applyA11yRoles();
-            }
-        },
-        a11y: { enabled: false }
+            a11y: { enabled: false }
+        });
+
+        // Store the swiper instance
+        swiperInstances.set(container, swiper);
+
+        // Prevent anchors from jumping to top for this container
+        const controls = container.querySelectorAll('.swiper_control.is-prev, .swiper_control.is-next');
+        controls.forEach(a => a.addEventListener('click', e => e.preventDefault()));
     });
 
-    // Prevent anchors from jumping to top
-    document.querySelectorAll('.swiper_control.is-prev, .swiper_control.is-next')
-        .forEach(a => a.addEventListener('click', e => e.preventDefault()));
-
+    // Update function for all instances
     const update = () => {
-        if (swiper) {
-            swiper.update();
-            updateArrowStates();
-        }
+        swiperInstances.forEach((swiper, container) => {
+            if (swiper) {
+                swiper.update();
+                updateArrowStates(container, swiper);
+            }
+        });
     };
     
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(update);

@@ -118,6 +118,7 @@ async function build() {
     const rootLoaders = [
         path.join(__dirname, 'rsm-loader.js'),
         path.join(__dirname, 'homepage-loader.js'),
+        path.join(__dirname, 'dev-helper.js'),
     ].filter(f => fs.existsSync(f));
     
     const allFiles = [...rootLoaders, ...jsFiles];
