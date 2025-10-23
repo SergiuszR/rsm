@@ -296,7 +296,8 @@
                 'js/global/utils.js',
                 'js/global/navbar-anim.js',
                 'js/global/loader.js',
-                'js/global/faq.js'
+                'js/global/faq.js',
+                'dev-helper.js'
             ]);
         });
     }
