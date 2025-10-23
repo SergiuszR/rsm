@@ -43,9 +43,13 @@ $(document).ready(function() {
         // Add safety check
         if (!swiper) return;
         
-        // Find arrows within this specific container
-        const prevArrow = container.querySelector('.swiper_control.is-prev');
-        const nextArrow = container.querySelector('.swiper_control.is-next');
+        // Find the parent wrapper that contains both podcasts_wrapper and slider_controls-wrapper
+        const parentWrapper = container.closest('.podcasts_outer-wrapper');
+        if (!parentWrapper) return;
+        
+        // Find arrows within the parent wrapper (sibling structure)
+        const prevArrow = parentWrapper.querySelector('.swiper_control.is-prev');
+        const nextArrow = parentWrapper.querySelector('.swiper_control.is-next');
         
         if (prevArrow) {
             if (swiper.isBeginning) {
@@ -82,6 +86,13 @@ $(document).ready(function() {
             applyA11yRoles(container);
         } catch (e) {}
 
+        // Find the parent wrapper for navigation controls
+        const parentWrapper = container.closest('.podcasts_outer-wrapper');
+        if (!parentWrapper) {
+            console.warn('No parent wrapper found for swiper container');
+            return;
+        }
+
         const swiper = new Swiper(container, {
             wrapperClass: 'showcase_grid',
             slideClass: 'showcase_item-outer',
@@ -92,8 +103,8 @@ $(document).ready(function() {
             initialSlide: 0,
             slidesPerView: window.innerWidth >= 768 ? 3 : 1.1,
             navigation: {
-                nextEl: container.querySelector('.swiper_control.is-next'),
-                prevEl: container.querySelector('.swiper_control.is-prev'),
+                nextEl: parentWrapper.querySelector('.swiper_control.is-next'),
+                prevEl: parentWrapper.querySelector('.swiper_control.is-prev'),
             },
 
             pagination: { enabled: false },
@@ -126,8 +137,8 @@ $(document).ready(function() {
         // Store the swiper instance
         swiperInstances.set(container, swiper);
 
-        // Prevent anchors from jumping to top for this container
-        const controls = container.querySelectorAll('.swiper_control.is-prev, .swiper_control.is-next');
+        // Prevent anchors from jumping to top for this container's controls
+        const controls = parentWrapper.querySelectorAll('.swiper_control.is-prev, .swiper_control.is-next');
         controls.forEach(a => a.addEventListener('click', e => e.preventDefault()));
     });
 
