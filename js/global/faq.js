@@ -41,7 +41,7 @@ $(document).ready(function() {
         
         const isExpanded = $button.attr('aria-expanded') === 'true';
         
-        // Close all other accordions (only if SINGLE_OPEN is true)
+        // Close all other accordions (only if SINGLE_OPEN is true)§
         if (SINGLE_OPEN && !isExpanded) {
           $('.faq_accordion').not($accordion).each(function() {
             const $otherAccordion = $(this);
