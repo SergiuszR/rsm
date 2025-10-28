@@ -1,5 +1,5 @@
 $(document).ready(function () {
-    var $clear = $('[fs-cmsfilter-element="clear"]');
+    var $clear = $('#clear-filter');
     var $wrapper = $('[data-element="categories-wrapper"]');
     var $checkboxes = $wrapper.find('input[type="checkbox"]');
     var $resultsCount = $('[fs-cmsfilter-element="results-count"]');
