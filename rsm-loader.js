@@ -300,7 +300,8 @@
                 'js/global/loader.js',
                 'js/global/faq.js',
                 'js/global/services.js',
-                'dev-helper.js'
+                'dev-helper.js',
+                'js/global/blog.js'
             ], function(error) {
                 console.log('All global scripts loaded, error:', error);
             });
