@@ -15,6 +15,10 @@ $(function () {
     const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const phrase1 = 'robimy social media';
     const phrase2 = 'robimy świeżo';
+    const MAX_VISIBLE_SEC = 10; // cap loader visibility to 10s total
+
+    // Track exit to allow early exit on load without double-running
+    let hasExited = false;
 
     // Stabilize layout to avoid "odd" jumps in .loader_inner
     // 1) Prevent wrapping during typing
@@ -62,8 +66,9 @@ $(function () {
 
     function typeChars($el, text) {
         return new Promise((resolve) => {
-            const base = prefersReduced ? 0.03 : 0.055;   // sec/char
-            const jitter = prefersReduced ? 0.004 : 0.018;
+            // Slightly faster typing
+            const base = prefersReduced ? 0.024 : 0.042;   // sec/char
+            const jitter = prefersReduced ? 0.003 : 0.014;
             const node = $el.get(0);
             let out = '';
 
@@ -89,8 +94,9 @@ $(function () {
 
     function eraseChars($el) {
         return new Promise((resolve) => {
-            const base = prefersReduced ? 0.028 : 0.05;   // sec/char
-            const jitter = prefersReduced ? 0.003 : 0.015;
+            // Slightly faster erase
+            const base = prefersReduced ? 0.022 : 0.038;   // sec/char
+            const jitter = prefersReduced ? 0.0025 : 0.012;
             const node = $el.get(0);
             const current = node.textContent || '';
             if (!current) return resolve();
@@ -128,13 +134,15 @@ $(function () {
     function runTextSequence() {
         return Promise.resolve()
             .then(() => typeChars($text, phrase1))
-            .then(() => pause(0.9))
+            .then(() => pause(0.6))
             .then(() => eraseChars($text))
             .then(() => typeChars($text, phrase2))
-            .then(() => pause(0.45));
+            .then(() => pause(0.3));
     }
 
     function exitLoader() {
+        if (hasExited) return;
+        hasExited = true;
         if (!window.gsap) {
             $loader.removeClass('is-active');
             $text.text('\u200B');
@@ -145,7 +153,7 @@ $(function () {
         gsap.set($loader, { clipPath: 'inset(0% 0% 0% 0%)' });
 
         gsap.timeline({ defaults: { ease: 'power3.inOut' } })
-            .to($loader, { duration: 0.75, clipPath: 'inset(0% 0% 100% 0%)' })
+            .to($loader, { duration: 0.6, clipPath: 'inset(0% 0% 100% 0%)' })
             .add(() => {
                 $loader.removeClass('is-active');
                 $text.text('\u200B');
@@ -153,7 +161,27 @@ $(function () {
             .set($loader[0], { clearProps: 'all' });
     }
 
-    Promise.all([whenWindowLoaded(), runTextSequence()])
-        .then(exitLoader)
-        .catch(() => { $loader.removeClass('is-active'); });
+    // Start typing immediately after first paint to avoid Opera delaying timers around the load event.
+    requestAnimationFrame(() => {
+        const startTimeMs = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+
+        runTextSequence()
+            .then(() => {
+                // After animation completes, wait for window load unless that would exceed MAX_VISIBLE_SEC
+                const nowMs = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+                const elapsedSec = (nowMs - startTimeMs) / 1000;
+
+                if (document.readyState === 'complete') return; // already loaded
+
+                const remainingSec = Math.max(0, MAX_VISIBLE_SEC - elapsedSec);
+                if (remainingSec === 0) return; // hit cap
+
+                return Promise.race([
+                    whenWindowLoaded(),
+                    pause(remainingSec)
+                ]);
+            })
+            .then(exitLoader)
+            .catch(() => { $loader.removeClass('is-active'); });
+    });
 });
