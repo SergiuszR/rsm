@@ -12,8 +12,8 @@ function isDesktopOrTablet() {
   return window.innerWidth >= 768; // Tablet and above
 }
 
+// Desktop zoom animation
 if (!videoGrow || !trigger || !growContainer || !originalParent) {
-  console.error("Missing elements");
 } else {
   let scrollTriggerInstance = null;
 
@@ -87,3 +87,85 @@ if (!videoGrow || !trigger || !growContainer || !originalParent) {
     }, 250);
   });
 }
+
+// Mobile auto-scroll (independent of desktop animation)
+let mobileAutoScrollControllers = [];
+
+function initMobileAutoScroll() {
+  // Mobile Landscape and below (<= 767px)
+  const isMobileLandscapeOrBelow = window.innerWidth <= 767;
+  // Cleanup any previous controllers
+  mobileAutoScrollControllers.forEach(c => c.cleanup && c.cleanup());
+  mobileAutoScrollControllers = [];
+
+  if (!isMobileLandscapeOrBelow) {
+    return;
+  }
+
+  const wrapper = document.querySelector('.reels_wrapper');
+  if (!wrapper) {
+    return;
+  }
+
+  // Enable horizontal scrolling
+  wrapper.style.overflowX = 'scroll';
+  wrapper.style.overflowY = 'hidden';
+  wrapper.style.scrollBehavior = 'auto';
+  wrapper.style.webkitOverflowScrolling = 'touch';
+
+  let rafId = null;
+  let intervalId = null;
+  let isPaused = false;
+  let lastTs = 0;
+  const speedPxPerSec = 28; // px per second (slightly faster for visibility)
+  let direction = 1; // 1 = right, -1 = left
+
+  function tick(dt) {
+    if (isPaused) return;
+    const maxScroll = wrapper.scrollWidth - wrapper.clientWidth;
+    const delta = speedPxPerSec * dt * direction;
+    let next = wrapper.scrollLeft + delta;
+    if (next >= maxScroll) {
+      next = maxScroll;
+      direction = -1;
+    } else if (next <= 0) {
+      next = 0;
+      direction = 1;
+    }
+    wrapper.scrollLeft = next;
+  }
+
+  // Pause on user interaction
+  const pause = () => { isPaused = true; };
+  const resume = () => { isPaused = false; };
+
+  wrapper.addEventListener('touchstart', pause, { passive: true });
+  wrapper.addEventListener('touchend', resume, { passive: true });
+
+  // Use a fixed timestep for reliable movement on mobile Safari
+  const intervalMs = 33; // ~30 FPS
+  intervalId = setInterval(() => tick(intervalMs / 1000), intervalMs);
+
+  const cleanup = function() {
+    if (rafId) cancelAnimationFrame(rafId);
+    if (intervalId) clearInterval(intervalId);
+    wrapper.style.overflowX = '';
+    wrapper.style.overflowY = '';
+    wrapper.removeEventListener('touchstart', pause);
+    wrapper.removeEventListener('touchend', resume);
+  };
+
+  mobileAutoScrollControllers.push({ cleanup: cleanup });
+}
+
+// Initialize mobile auto-scroll
+initMobileAutoScroll();
+
+// Handle window resize for mobile auto-scroll
+let mobileResizeTimer;
+window.addEventListener("resize", () => {
+  clearTimeout(mobileResizeTimer);
+  mobileResizeTimer = setTimeout(() => {
+    initMobileAutoScroll();
+  }, 250);
+});
