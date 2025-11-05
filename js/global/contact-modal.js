@@ -1,6 +1,6 @@
 $(document).ready(function() {
     // Open modal
-    $('#btn-contact').on('click', function(e) {
+    $('[data-trigger="contact"]').on('click', function(e) {
         e.preventDefault();
         $('[data-element="contact-modal"]').addClass('show');
     });
