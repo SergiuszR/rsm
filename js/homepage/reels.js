@@ -102,60 +102,60 @@ function initMobileAutoScroll() {
     return;
   }
 
-  const wrapper = document.querySelector('.reels_wrapper');
-  if (!wrapper) {
+  // Support multiple horizontal wrappers on mobile
+  const wrappers = Array.from(document.querySelectorAll('.reels_wrapper, .position_videos.is-horizontal'));
+  if (wrappers.length === 0) {
     return;
   }
 
-  // Enable horizontal scrolling
-  wrapper.style.overflowX = 'scroll';
-  wrapper.style.overflowY = 'hidden';
-  wrapper.style.scrollBehavior = 'auto';
-  wrapper.style.webkitOverflowScrolling = 'touch';
+  wrappers.forEach((wrapper) => {
+    // Enable horizontal scrolling on each wrapper
+    wrapper.style.overflowX = 'scroll';
+    wrapper.style.overflowY = 'hidden';
+    wrapper.style.scrollBehavior = 'auto';
+    wrapper.style.webkitOverflowScrolling = 'touch';
 
-  let rafId = null;
-  let intervalId = null;
-  let isPaused = false;
-  let lastTs = 0;
-  const speedPxPerSec = 28; // px per second (slightly faster for visibility)
-  let direction = 1; // 1 = right, -1 = left
+    let intervalId = null;
+    let isPaused = false;
+    const speedPxPerSec = 28; // px per second (slightly faster for visibility)
+    let direction = 1; // 1 = right, -1 = left
 
-  function tick(dt) {
-    if (isPaused) return;
-    const maxScroll = wrapper.scrollWidth - wrapper.clientWidth;
-    const delta = speedPxPerSec * dt * direction;
-    let next = wrapper.scrollLeft + delta;
-    if (next >= maxScroll) {
-      next = maxScroll;
-      direction = -1;
-    } else if (next <= 0) {
-      next = 0;
-      direction = 1;
+    function tick(dt) {
+      if (isPaused) return;
+      const maxScroll = wrapper.scrollWidth - wrapper.clientWidth;
+      const delta = speedPxPerSec * dt * direction;
+      let next = wrapper.scrollLeft + delta;
+      if (next >= maxScroll) {
+        next = maxScroll;
+        direction = -1;
+      } else if (next <= 0) {
+        next = 0;
+        direction = 1;
+      }
+      wrapper.scrollLeft = next;
     }
-    wrapper.scrollLeft = next;
-  }
 
-  // Pause on user interaction
-  const pause = () => { isPaused = true; };
-  const resume = () => { isPaused = false; };
+    // Pause on user interaction
+    const pause = () => { isPaused = true; };
+    const resume = () => { isPaused = false; };
 
-  wrapper.addEventListener('touchstart', pause, { passive: true });
-  wrapper.addEventListener('touchend', resume, { passive: true });
+    wrapper.addEventListener('touchstart', pause, { passive: true });
+    wrapper.addEventListener('touchend', resume, { passive: true });
 
-  // Use a fixed timestep for reliable movement on mobile Safari
-  const intervalMs = 33; // ~30 FPS
-  intervalId = setInterval(() => tick(intervalMs / 1000), intervalMs);
+    // Use a fixed timestep for reliable movement on mobile Safari
+    const intervalMs = 33; // ~30 FPS
+    intervalId = setInterval(() => tick(intervalMs / 1000), intervalMs);
 
-  const cleanup = function() {
-    if (rafId) cancelAnimationFrame(rafId);
-    if (intervalId) clearInterval(intervalId);
-    wrapper.style.overflowX = '';
-    wrapper.style.overflowY = '';
-    wrapper.removeEventListener('touchstart', pause);
-    wrapper.removeEventListener('touchend', resume);
-  };
+    const cleanup = function() {
+      if (intervalId) clearInterval(intervalId);
+      wrapper.style.overflowX = '';
+      wrapper.style.overflowY = '';
+      wrapper.removeEventListener('touchstart', pause);
+      wrapper.removeEventListener('touchend', resume);
+    };
 
-  mobileAutoScrollControllers.push({ cleanup: cleanup });
+    mobileAutoScrollControllers.push({ cleanup: cleanup });
+  });
 }
 
 // Initialize mobile auto-scroll
