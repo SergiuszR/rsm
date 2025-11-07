@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', () => {
+$(document).ready(function() {
     // Webflow's default desktop breakpoint is 992px
     const isDesktop = () => window.matchMedia('(min-width: 992px)').matches;
     
@@ -6,7 +6,6 @@ document.addEventListener('DOMContentLoaded', () => {
       const hover = showcase.querySelector('[data-hover]');
       const details = showcase.querySelector('[data-details]');
       const category = showcase.querySelector('[data-category]');
-      
       showcase.addEventListener('mouseenter', () => {
         if (!isDesktop()) return; // Exit if not desktop
         
