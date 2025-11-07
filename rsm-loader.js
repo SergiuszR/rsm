@@ -301,7 +301,8 @@
                 'js/global/faq.js',
                 'js/global/services.js',
                 'dev-helper.js',
-                'js/global/blog.js'
+                'js/global/blog.js',
+                'js/global/casestudy-hover.js'
             ], function(error) {
                 console.log('All global scripts loaded, error:', error);
             });
