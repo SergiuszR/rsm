@@ -8,6 +8,39 @@ $(function () {
 
     if (!$loader.length || !$text.length || !$inner.length) return;
 
+    const STORAGE_KEY = 'rsm.loader.lastShown';
+    const RESET_MS = 2 * 60 * 60 * 1000; // 2 hours
+
+    function getStoredTimestamp() {
+        try {
+            const value = window.localStorage ? window.localStorage.getItem(STORAGE_KEY) : null;
+            if (!value) return null;
+            const parsed = Number(value);
+            return Number.isFinite(parsed) ? parsed : null;
+        } catch (err) {
+            return null;
+        }
+    }
+
+    function setStoredTimestamp(ts) {
+        try {
+            if (window.localStorage) window.localStorage.setItem(STORAGE_KEY, String(ts));
+        } catch (err) {
+            // ignore
+        }
+    }
+
+    const lastShown = getStoredTimestamp();
+    const now = Date.now();
+
+    if (lastShown && (now - lastShown) < RESET_MS) {
+        $loader.removeClass('is-active');
+        $text.text('\u200B');
+        return;
+    }
+
+    setStoredTimestamp(now);
+
     // Keep loader visible while animating
     $loader.addClass('is-active');
 
