@@ -304,6 +304,143 @@ $('#submit').on('click', function(e) {
   $('#submit-original').trigger('click');
 });
 
+// Typing Animation Utility
+// Usage: Add data-typing-effect to any element with text content
+// Optional: data-typing-speed="slow|normal|fast" (default: normal)
+// Optional: data-typing-cursor="true|false" (default: true)
+// Optional: data-typing-trigger="load|scroll|hover" (default: load)
+
+function initTypingEffect() {
+    const typingElements = document.querySelectorAll('[data-typing-effect]');
+    
+    typingElements.forEach(element => {
+        const originalText = element.textContent.trim();
+        if (!originalText) return;
+        
+        // Get configuration from data attributes
+        const speed = element.dataset.typingSpeed || 'normal';
+        const showCursor = element.dataset.typingCursor !== 'false';
+        const trigger = element.dataset.typingTrigger || 'load';
+        
+        // Speed configurations (seconds per character)
+        const speedConfigs = {
+            slow: { base: 0.08, jitter: 0.02 },
+            normal: { base: 0.05, jitter: 0.015 },
+            fast: { base: 0.03, jitter: 0.01 }
+        };
+        
+        const config = speedConfigs[speed] || speedConfigs.normal;
+        const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        
+        // Adjust for reduced motion
+        if (prefersReduced) {
+            config.base *= 0.5;
+            config.jitter *= 0.5;
+        }
+        
+        // Create cursor element if needed
+        let cursor = null;
+        if (showCursor) {
+            cursor = document.createElement('span');
+            cursor.style.cssText = 'border-right: 2px solid currentColor; padding-right: 2px; animation: typing-blink 0.7s infinite;';
+            
+            // Add blink animation if not exists
+            if (!document.querySelector('#typing-blink-style')) {
+                const style = document.createElement('style');
+                style.id = 'typing-blink-style';
+                style.textContent = '@keyframes typing-blink { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0; } }';
+                document.head.appendChild(style);
+            }
+        }
+        
+        function playTypingAnimation() {
+            // Clear the element and start animation
+            element.textContent = '';
+            if (cursor) element.appendChild(cursor);
+            
+            let currentIndex = 0;
+            
+            function typeNextCharacter() {
+                if (currentIndex < originalText.length) {
+                    element.textContent = originalText.substring(0, currentIndex + 1);
+                    if (cursor) element.appendChild(cursor);
+                    
+                    currentIndex++;
+                    const delay = (config.base + Math.random() * config.jitter) * 1000;
+                    setTimeout(typeNextCharacter, delay);
+                } else {
+                    // Animation complete - remove cursor after a delay
+                    if (cursor) {
+                        setTimeout(() => {
+                            if (cursor && cursor.parentNode) {
+                                cursor.remove();
+                            }
+                        }, 1000);
+                    }
+                }
+            }
+            
+            typeNextCharacter();
+        }
+        
+        // Set up trigger
+        switch (trigger) {
+            case 'scroll':
+                if (window.ScrollTrigger) {
+                    ScrollTrigger.create({
+                        trigger: element,
+                        start: 'top 80%',
+                        once: true,
+                        onEnter: playTypingAnimation
+                    });
+                } else {
+                    // Fallback to intersection observer
+                    const observer = new IntersectionObserver((entries) => {
+                        entries.forEach(entry => {
+                            if (entry.isIntersecting) {
+                                playTypingAnimation();
+                                observer.unobserve(element);
+                            }
+                        });
+                    }, { threshold: 0.1 });
+                    observer.observe(element);
+                }
+                break;
+                
+            case 'hover':
+                element.addEventListener('mouseenter', playTypingAnimation, { once: true });
+                break;
+                
+            case 'load':
+            default:
+                // Small delay to ensure DOM is ready
+                setTimeout(playTypingAnimation, 100);
+                break;
+        }
+    });
+}
+
+// Initialize typing effects when GSAP is ready
+(function waitForAnimationManager() {
+    if (window.AnimationManager && typeof window.AnimationManager.onReady === 'function') {
+        window.AnimationManager.onReady(initTypingEffect);
+    } else {
+        let attempts = 0;
+        const maxAttempts = 100;
+        const timer = setInterval(function() {
+            attempts++;
+            if (window.AnimationManager && typeof window.AnimationManager.onReady === 'function') {
+                clearInterval(timer);
+                window.AnimationManager.onReady(initTypingEffect);
+            } else if (attempts >= maxAttempts) {
+                clearInterval(timer);
+                // Fallback - initialize immediately
+                initTypingEffect();
+            }
+        }, 50);
+    }
+})();
+
 // Marquee animation, swing effect
 
 $('.banner_photo-wrapper').each(function(index) {

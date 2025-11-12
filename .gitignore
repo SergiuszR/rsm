@@ -21,3 +21,6 @@ yarn-error.log*
 
 # Test results
 test-results/
+
+# Docs
+docs/
