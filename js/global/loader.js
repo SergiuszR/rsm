@@ -179,13 +179,23 @@ $(function () {
         if (!window.gsap) {
             $loader.removeClass('is-active');
             $text.text('\u200B');
+            // Remove loader from DOM after a short delay to ensure any CSS transitions complete
+            setTimeout(() => {
+                $loader.remove();
+            }, 100);
             return;
         }
 
         // Clean, non-janky exit: no blur or inner scaling
         gsap.set($loader, { clipPath: 'inset(0% 0% 0% 0%)' });
 
-        gsap.timeline({ defaults: { ease: 'power3.inOut' } })
+        gsap.timeline({ 
+            defaults: { ease: 'power3.inOut' },
+            onComplete: () => {
+                // Remove loader from DOM after animation completes
+                $loader.remove();
+            }
+        })
             .to($loader, { duration: 0.6, clipPath: 'inset(0% 0% 100% 0%)' })
             .add(() => {
                 $loader.removeClass('is-active');
