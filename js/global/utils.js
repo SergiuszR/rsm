@@ -450,3 +450,35 @@ $('.banner_photo-wrapper').each(function(index) {
     });
   });
   
+//   Scroll disable when modal is open
+
+$(function () {
+    var y = 0, $b = $('body');
+
+    function lockScroll() {
+        if ($b.hasClass('js-scroll-locked')) return;
+        y = window.pageYOffset || document.documentElement.scrollTop || 0;
+        var sbw = window.innerWidth - document.documentElement.clientWidth; // scrollbar width
+        $b.addClass('js-scroll-locked').css({
+            position: 'fixed',
+            top: -y + 'px',
+            left: 0,
+            right: 0,
+            width: '100%',
+            overflow: 'hidden',
+            'padding-right': sbw ? sbw + 'px' : ''
+        });
+    }
+
+    function unlockScroll() {
+        if (!$b.hasClass('js-scroll-locked')) return;
+        $b.removeClass('js-scroll-locked').css({
+            position: '', top: '', left: '', right: '', width: '', overflow: '', 'padding-right': ''
+        });
+        window.scrollTo(0, y || 0);
+    }
+
+    $('[data-trigger="contact"]').on('click', lockScroll);
+    $('[data-element="close-modal"]').on('click', unlockScroll);
+    $(document).on('keydown', function (e) { if (e.key === 'Escape') unlockScroll(); });
+});
