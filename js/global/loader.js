@@ -47,7 +47,6 @@ $(function () {
     // Config
     const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const phrase1 = 'robimy social media';
-    const phrase2 = 'robimy świeżo';
     const MAX_VISIBLE_SEC = 10; // cap loader visibility to 10s total
 
     // Track exit to allow early exit on load without double-running
@@ -61,9 +60,9 @@ $(function () {
     $inner.css({ willChange: 'transform', transformOrigin: '50% 50%' });
     $loader.css({ willChange: 'clip-path' });
 
-    // 3) Measure longest phrase width using current font and lock min-width on .loader_inner
+    // 3) Measure phrase width using current font and lock min-width on .loader_inner
     (function setMinWidthForInner() {
-        const longest = [phrase1, phrase2].reduce((a, b) => (a.length >= b.length ? a : b));
+        const longest = phrase1;
         const cs = window.getComputedStyle($text[0]);
         const $measure = $('<span/>')
             .text(longest)
@@ -166,11 +165,7 @@ $(function () {
 
     function runTextSequence() {
         return Promise.resolve()
-            .then(() => typeChars($text, phrase1))
-            .then(() => pause(0.6))
-            .then(() => eraseChars($text))
-            .then(() => typeChars($text, phrase2))
-            .then(() => pause(0.3));
+            .then(() => typeChars($text, phrase1));
     }
 
     function exitLoader() {
