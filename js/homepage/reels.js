@@ -112,14 +112,9 @@ function initMobileAutoScroll() {
   }
 
   wrappers.forEach((wrapper) => {
-    // Check if wrapper has scrollable content
-    const hasScrollableContent = wrapper.scrollWidth > wrapper.clientWidth;
-    if (!hasScrollableContent) {
-      console.log('[Reels] Wrapper has no scrollable content, skipping:', wrapper.className);
-      return;
-    }
-
-    // Enable horizontal scrolling on each wrapper
+    // Enable horizontal scrolling on each wrapper regardless of current width.
+    // Content (videos/images) often loads asynchronously on mobile, so we can't
+    // rely on scrollWidth at init time to decide whether to set up the loop.
     wrapper.style.overflowX = 'scroll';
     wrapper.style.overflowY = 'hidden';
     wrapper.style.scrollBehavior = 'auto';
