@@ -144,6 +144,21 @@ if (videoGrow && trigger && growContainer && originalParent) {
 
 // Mobile auto-scroll (independent of desktop animation)
 let mobileAutoScrollControllers = [];
+let pendingWrapperRetry = null;
+
+function queueWrapperRetry() {
+  if (pendingWrapperRetry) return;
+  pendingWrapperRetry = setTimeout(() => {
+    pendingWrapperRetry = null;
+    initMobileAutoScroll();
+  }, 400);
+}
+
+function cancelWrapperRetry() {
+  if (!pendingWrapperRetry) return;
+  clearTimeout(pendingWrapperRetry);
+  pendingWrapperRetry = null;
+}
 
 function initMobileAutoScroll() {
   // Mobile Landscape and below (<= 767px)
@@ -155,6 +170,7 @@ function initMobileAutoScroll() {
   mobileAutoScrollControllers = [];
 
   if (!isMobileLandscapeOrBelow) {
+    cancelWrapperRetry();
     return;
   }
 
@@ -162,8 +178,11 @@ function initMobileAutoScroll() {
   const wrappers = Array.from(document.querySelectorAll('.reels_wrapper, .position_videos.is-horizontal'));
   if (wrappers.length === 0) {
     console.log('[Reels] No wrappers found for mobile auto-scroll');
+    queueWrapperRetry();
     return;
   }
+
+  cancelWrapperRetry();
 
   wrappers.forEach((wrapper) => {
     // Enable horizontal scrolling on each wrapper regardless of current width.
