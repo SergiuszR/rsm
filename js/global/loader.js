@@ -33,9 +33,17 @@ $(function () {
     const lastShown = getStoredTimestamp();
     const now = Date.now();
 
+    let hasRemovedFromDom = false;
+    function removeLoaderElement() {
+        if (hasRemovedFromDom) return;
+        hasRemovedFromDom = true;
+        $loader.remove();
+    }
+
     if (lastShown && (now - lastShown) < RESET_MS) {
         $loader.removeClass('is-active');
         $text.text('\u200B');
+        removeLoaderElement();
         return;
     }
 
@@ -175,9 +183,7 @@ $(function () {
             $loader.removeClass('is-active');
             $text.text('\u200B');
             // Remove loader from DOM after a short delay to ensure any CSS transitions complete
-            setTimeout(() => {
-                $loader.remove();
-            }, 100);
+            setTimeout(removeLoaderElement, 100);
             return;
         }
 
@@ -188,7 +194,7 @@ $(function () {
             defaults: { ease: 'power3.inOut' },
             onComplete: () => {
                 // Remove loader from DOM after animation completes
-                $loader.remove();
+                removeLoaderElement();
             }
         })
             .to($loader, { duration: 0.6, clipPath: 'inset(0% 0% 100% 0%)' })
@@ -220,6 +226,10 @@ $(function () {
                 ]);
             })
             .then(exitLoader)
-            .catch(() => { $loader.removeClass('is-active'); });
+            .catch(() => {
+                $loader.removeClass('is-active');
+                $text.text('\u200B');
+                removeLoaderElement();
+            });
     });
 });
