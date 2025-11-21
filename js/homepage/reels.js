@@ -192,9 +192,7 @@ function initMobileAutoScroll() {
     wrapper.style.overflowY = 'hidden';
     wrapper.style.scrollBehavior = 'auto';
     wrapper.style.webkitOverflowScrolling = 'touch';
-    // Ensure wrapper can scroll
-    wrapper.style.display = wrapper.style.display || 'flex';
-    wrapper.style.position = 'relative';
+    // Do not override layout display/position — Webflow controls grid/flex there.
 
     let isPaused = false;
     let rafId = null;
@@ -260,8 +258,6 @@ function initMobileAutoScroll() {
       if (rafId) cancelAnimationFrame(rafId);
       wrapper.style.overflowX = '';
       wrapper.style.overflowY = '';
-      wrapper.style.display = '';
-      wrapper.style.position = '';
       wrapper.removeEventListener('touchstart', pause);
       wrapper.removeEventListener('touchend', resume);
       wrapper.removeEventListener('touchcancel', resume);
