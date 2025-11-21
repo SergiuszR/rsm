@@ -93,7 +93,9 @@ let mobileAutoScrollControllers = [];
 
 function initMobileAutoScroll() {
   // Mobile Landscape and below (<= 767px)
+  // Use window.innerWidth for consistency, but also check for mobile user agent as fallback
   const isMobileLandscapeOrBelow = window.innerWidth <= 767;
+  
   // Cleanup any previous controllers
   mobileAutoScrollControllers.forEach(c => c.cleanup && c.cleanup());
   mobileAutoScrollControllers = [];
@@ -105,26 +107,58 @@ function initMobileAutoScroll() {
   // Support multiple horizontal wrappers on mobile
   const wrappers = Array.from(document.querySelectorAll('.reels_wrapper, .position_videos.is-horizontal'));
   if (wrappers.length === 0) {
+    console.log('[Reels] No wrappers found for mobile auto-scroll');
     return;
   }
 
   wrappers.forEach((wrapper) => {
+    // Check if wrapper has scrollable content
+    const hasScrollableContent = wrapper.scrollWidth > wrapper.clientWidth;
+    if (!hasScrollableContent) {
+      console.log('[Reels] Wrapper has no scrollable content, skipping:', wrapper.className);
+      return;
+    }
+
     // Enable horizontal scrolling on each wrapper
     wrapper.style.overflowX = 'scroll';
     wrapper.style.overflowY = 'hidden';
     wrapper.style.scrollBehavior = 'auto';
     wrapper.style.webkitOverflowScrolling = 'touch';
+    // Ensure wrapper can scroll
+    wrapper.style.display = wrapper.style.display || 'flex';
+    wrapper.style.position = 'relative';
 
-    let intervalId = null;
     let isPaused = false;
+    let rafId = null;
     const speedPxPerSec = 28; // px per second (slightly faster for visibility)
     let direction = 1; // 1 = right, -1 = left
+    let lastTime = performance.now();
 
-    function tick(dt) {
-      if (isPaused) return;
+    function tick(currentTime) {
+      if (isPaused) {
+        lastTime = currentTime;
+        rafId = requestAnimationFrame(tick);
+        return;
+      }
+
+      const dt = (currentTime - lastTime) / 1000; // Convert to seconds
+      lastTime = currentTime;
+
+      if (dt > 0.1) {
+        // Skip large time deltas (e.g., when tab was inactive)
+        rafId = requestAnimationFrame(tick);
+        return;
+      }
+
       const maxScroll = wrapper.scrollWidth - wrapper.clientWidth;
+      if (maxScroll <= 0) {
+        rafId = requestAnimationFrame(tick);
+        return;
+      }
+
       const delta = speedPxPerSec * dt * direction;
       let next = wrapper.scrollLeft + delta;
+      
       if (next >= maxScroll) {
         next = maxScroll;
         direction = -1;
@@ -132,34 +166,63 @@ function initMobileAutoScroll() {
         next = 0;
         direction = 1;
       }
+      
       wrapper.scrollLeft = next;
+      rafId = requestAnimationFrame(tick);
     }
 
     // Pause on user interaction
-    const pause = () => { isPaused = true; };
-    const resume = () => { isPaused = false; };
+    const pause = () => { 
+      isPaused = true; 
+    };
+    const resume = () => { 
+      isPaused = false;
+      lastTime = performance.now();
+    };
 
     wrapper.addEventListener('touchstart', pause, { passive: true });
     wrapper.addEventListener('touchend', resume, { passive: true });
+    wrapper.addEventListener('touchcancel', resume, { passive: true });
 
-    // Use a fixed timestep for reliable movement on mobile Safari
-    const intervalMs = 33; // ~30 FPS
-    intervalId = setInterval(() => tick(intervalMs / 1000), intervalMs);
+    // Start animation using requestAnimationFrame for better mobile performance
+    lastTime = performance.now();
+    rafId = requestAnimationFrame(tick);
 
     const cleanup = function() {
-      if (intervalId) clearInterval(intervalId);
+      if (rafId) cancelAnimationFrame(rafId);
       wrapper.style.overflowX = '';
       wrapper.style.overflowY = '';
+      wrapper.style.display = '';
+      wrapper.style.position = '';
       wrapper.removeEventListener('touchstart', pause);
       wrapper.removeEventListener('touchend', resume);
+      wrapper.removeEventListener('touchcancel', resume);
     };
 
     mobileAutoScrollControllers.push({ cleanup: cleanup });
   });
 }
 
+// Initialize mobile auto-scroll when DOM is ready
+function initMobileAutoScrollWhenReady() {
+  // Wait for DOM to be ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      // Add a small delay to ensure elements are rendered
+      setTimeout(() => {
+        initMobileAutoScroll();
+      }, 100);
+    });
+  } else {
+    // DOM already ready, but wait a bit for rendering
+    setTimeout(() => {
+      initMobileAutoScroll();
+    }, 100);
+  }
+}
+
 // Initialize mobile auto-scroll
-initMobileAutoScroll();
+initMobileAutoScrollWhenReady();
 
 // Handle window resize for mobile auto-scroll
 let mobileResizeTimer;
@@ -168,4 +231,13 @@ window.addEventListener("resize", () => {
   mobileResizeTimer = setTimeout(() => {
     initMobileAutoScroll();
   }, 250);
+});
+
+// Also reinitialize when page becomes visible (handles mobile browser tab switching)
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') {
+    setTimeout(() => {
+      initMobileAutoScroll();
+    }, 100);
+  }
 });
