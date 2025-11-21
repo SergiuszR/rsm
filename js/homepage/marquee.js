@@ -1,5 +1,41 @@
 $(document).ready(function () {
   const STATE_KEY = '__rsmMarqueeState';
+  const LAYOUT_RESET_PROPS = {
+    wrapperInner: ['flex', 'display', 'width'],
+    marquee: ['display', 'flex-wrap', 'width'],
+    logo: ['flex', 'width']
+  };
+
+  function clearInlineStyles(nodes, properties) {
+    if (!nodes || !nodes.length) return;
+    nodes.forEach(function (node) {
+      properties.forEach(function (prop) {
+        node.style.removeProperty(prop);
+      });
+    });
+  }
+
+  function applyLayoutStyles(collections) {
+    const innerWrappers = collections.innerWrappers || [];
+    const marqueeNodes = collections.marqueeNodes || [];
+    const logoItems = collections.logoItems || [];
+
+    innerWrappers.forEach(function (inner) {
+      inner.style.flex = '0 0 auto';
+      inner.style.display = 'flex';
+    });
+
+    marqueeNodes.forEach(function (marquee) {
+      marquee.style.display = 'inline-flex';
+      marquee.style.flexWrap = 'nowrap';
+      marquee.style.width = 'auto';
+    });
+
+    logoItems.forEach(function (logo) {
+      logo.style.flex = '0 0 auto';
+      logo.style.width = 'auto';
+    });
+  }
 
   function cleanupMarquee(wrapper) {
     if (!wrapper || !wrapper[STATE_KEY]) return;
@@ -24,12 +60,9 @@ $(document).ready(function () {
       previous.clone.remove();
     }
 
-    if (previous.innerWrappers?.length) {
-      previous.innerWrappers.forEach(function (node) {
-        node.style.removeProperty('flex');
-        node.style.removeProperty('width');
-      });
-    }
+    clearInlineStyles(previous.innerWrappers, LAYOUT_RESET_PROPS.wrapperInner);
+    clearInlineStyles(previous.marqueeNodes, LAYOUT_RESET_PROPS.marquee);
+    clearInlineStyles(previous.logoItems, LAYOUT_RESET_PROPS.logo);
 
     wrapper.style.removeProperty('width');
     delete wrapper[STATE_KEY];
@@ -63,9 +96,16 @@ $(document).ready(function () {
       wrapper.appendChild(clone);
 
       const innerWrappers = Array.from(wrapper.querySelectorAll('.banner_wrapper-inner'));
+      const marqueeNodes = Array.from(wrapper.querySelectorAll('.banner_marquee'));
+      const logoItems = Array.from(wrapper.querySelectorAll('.banner_logo-wrapper'));
+
+      applyLayoutStyles({ innerWrappers, marqueeNodes, logoItems });
+
       const state = {
         clone,
         innerWrappers,
+        marqueeNodes,
+        logoItems,
         tween: null,
         distance: initialWidth,
         onResize: null,
@@ -76,16 +116,12 @@ $(document).ready(function () {
 
       function measureTrackWidth() {
         const prevWrapperWidth = wrapper.style.width;
-        const prevInnerStyles = innerWrappers.map(function (node) {
-          return {
-            flex: node.style.flex,
-            width: node.style.width
-          };
+        const prevInnerWidths = innerWrappers.map(function (node) {
+          return node.style.width;
         });
 
         wrapper.style.removeProperty('width');
         innerWrappers.forEach(function (node) {
-          node.style.removeProperty('flex');
           node.style.removeProperty('width');
         });
 
@@ -93,11 +129,8 @@ $(document).ready(function () {
 
         if (prevWrapperWidth) wrapper.style.width = prevWrapperWidth;
         innerWrappers.forEach(function (node, index) {
-          const prev = prevInnerStyles[index];
-          if (prev.flex) node.style.flex = prev.flex;
-          else node.style.removeProperty('flex');
-
-          if (prev.width) node.style.width = prev.width;
+          const prevWidth = prevInnerWidths[index];
+          if (prevWidth) node.style.width = prevWidth;
           else node.style.removeProperty('width');
         });
 
@@ -109,7 +142,6 @@ $(document).ready(function () {
         if (!isMobile || !trackWidth) {
           wrapper.style.removeProperty('width');
           innerWrappers.forEach(function (node) {
-            node.style.removeProperty('flex');
             node.style.removeProperty('width');
           });
           return;
