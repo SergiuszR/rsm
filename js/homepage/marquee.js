@@ -10,6 +10,16 @@ $(document).ready(function () {
       window.removeEventListener('resize', previous.onResize);
     }
 
+    if (previous.resizeObserver && typeof previous.resizeObserver.disconnect === 'function') {
+      previous.resizeObserver.disconnect();
+    }
+
+    if (previous.remeasureTimers?.length) {
+      previous.remeasureTimers.forEach(function (timerId) {
+        clearTimeout(timerId);
+      });
+    }
+
     if (previous.clone?.parentNode === wrapper) {
       previous.clone.remove();
     }
@@ -58,7 +68,10 @@ $(document).ready(function () {
         innerWrappers,
         tween: null,
         distance: initialWidth,
-        onResize: null
+        onResize: null,
+        resizeObserver: null,
+        remeasureTimers: [],
+        resizePending: false
       };
 
       function measureTrackWidth() {
@@ -134,12 +147,20 @@ $(document).ready(function () {
       }
 
       function handleResize() {
-        const measuredWidth = measureTrackWidth();
-        normalizeMobileLayout(measuredWidth);
+        if (state.resizePending) return;
+        state.resizePending = true;
 
-        if (measuredWidth && Math.abs(measuredWidth - state.distance) > 1) {
-          updateTween(measuredWidth);
-        }
+        const schedule = window.requestAnimationFrame || function (cb) { return setTimeout(cb, 16); };
+        schedule(function () {
+          state.resizePending = false;
+
+          const measuredWidth = measureTrackWidth();
+          normalizeMobileLayout(measuredWidth);
+
+          if (measuredWidth && Math.abs(measuredWidth - state.distance) > 1) {
+            updateTween(measuredWidth);
+          }
+        });
       }
 
       normalizeMobileLayout(initialWidth);
@@ -147,6 +168,18 @@ $(document).ready(function () {
 
       state.onResize = handleResize;
       window.addEventListener('resize', handleResize);
+
+      if (window.ResizeObserver) {
+        state.resizeObserver = new ResizeObserver(function () {
+          handleResize();
+        });
+        state.resizeObserver.observe(firstInner);
+      }
+
+      state.remeasureTimers = [250, 1000, 2000, 4000, 8000].map(function (delay) {
+        return setTimeout(handleResize, delay);
+      });
+
       wrapper[STATE_KEY] = state;
 
 
