@@ -7,9 +7,9 @@ $(document).ready(function () {
     $wrapper.prepend($clear);
     
    function getPlural(n) {
-    if (n === 1) return 'odcinek';
-    if (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20)) return 'odcinki';
-    return 'odcinków';
+    if (n === 1) return 'wpis';
+    if (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20)) return 'wpisy';
+    return 'wpisów';
 }
 
 function updateResults() {
