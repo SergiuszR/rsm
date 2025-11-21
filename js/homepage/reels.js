@@ -1,7 +1,5 @@
 // Reels section appear and zoom animation
 
-gsap.registerPlugin(ScrollTrigger, Flip);
-
 const videoGrow = document.querySelector("[data-video-grow]");
 const trigger = document.querySelector(".reels_zoom-trigger");
 const growContainer = document.querySelector(".reels_grow-container-inner");
@@ -12,80 +10,136 @@ function isDesktopOrTablet() {
   return window.innerWidth >= 768; // Tablet and above
 }
 
-// Desktop zoom animation
-if (!videoGrow || !trigger || !growContainer || !originalParent) {
-} else {
-  let scrollTriggerInstance = null;
+if (videoGrow && trigger && growContainer && originalParent) {
+  let desktopZoomInitialized = false;
 
-  function initScrollTrigger() {
-    if (isDesktopOrTablet() && !scrollTriggerInstance) {
-      scrollTriggerInstance = ScrollTrigger.create({
-        trigger: trigger,
-        start: "top center",
-        end: "bottom center",
-        onEnter: () => {
-          gsap.to(
-            ".big-background-video-wrapper:not([data-video-grow-wrapper]), .background-video-wrapper",
-            {
-              opacity: 0,
-              duration: 0.6,
-            }
-          );
+  const setupDesktopZoom = () => {
+    if (desktopZoomInitialized) return true;
 
-          const state = Flip.getState(videoGrow);
-          growContainer.appendChild(videoGrow);
+    const gsapInstance = window.gsap;
+    const scrollTriggerPlugin = window.ScrollTrigger;
+    const flipPlugin = window.Flip;
 
-          Flip.from(state, {
-            duration: 1.2,
-            ease: "power2.inOut",
-            absolute: true,
-          });
-        },
-        onLeaveBack: () => {
-          const state = Flip.getState(videoGrow);
+    if (!gsapInstance || !scrollTriggerPlugin) {
+      return false;
+    }
+
+    if (!flipPlugin) {
+      console.warn('[Reels] GSAP Flip plugin missing; skipping zoom animation.');
+      return false;
+    }
+
+    gsapInstance.registerPlugin(scrollTriggerPlugin, flipPlugin);
+
+    let scrollTriggerInstance = null;
+
+    function initScrollTrigger() {
+      const isDesktop = isDesktopOrTablet();
+
+      if (isDesktop && !scrollTriggerInstance) {
+        scrollTriggerInstance = scrollTriggerPlugin.create({
+          trigger: trigger,
+          start: "top center",
+          end: "bottom center",
+          onEnter: () => {
+            gsapInstance.to(
+              ".big-background-video-wrapper:not([data-video-grow-wrapper]), .background-video-wrapper",
+              {
+                opacity: 0,
+                duration: 0.6,
+              }
+            );
+
+            const state = flipPlugin.getState(videoGrow);
+            growContainer.appendChild(videoGrow);
+
+            flipPlugin.from(state, {
+              duration: 1.2,
+              ease: "power2.inOut",
+              absolute: true,
+            });
+          },
+          onLeaveBack: () => {
+            const state = flipPlugin.getState(videoGrow);
+            originalParent.appendChild(videoGrow);
+
+            flipPlugin.from(state, {
+              duration: 1.2,
+              ease: "power2.inOut",
+              absolute: true,
+              zIndex: 999,
+              absoluteOnLeave: true,
+              onComplete: () => {
+                gsapInstance.to(
+                  ".big-background-video-wrapper:not([data-video-grow-wrapper]), .background-video-wrapper",
+                  {
+                    opacity: 1,
+                    duration: 0.3,
+                    delay: 0,
+                  }
+                );
+              },
+            });
+          },
+        });
+      } else if (!isDesktop && scrollTriggerInstance) {
+        scrollTriggerInstance.kill();
+        scrollTriggerInstance = null;
+
+        if (videoGrow.parentElement !== originalParent) {
           originalParent.appendChild(videoGrow);
-
-          Flip.from(state, {
-            duration: 1.2,
-            ease: "power2.inOut",
-            absolute: true,
-            zIndex: 999,
-            absoluteOnLeave: true,
-            onComplete: () => {
-              gsap.to(
-                ".big-background-video-wrapper:not([data-video-grow-wrapper]), .background-video-wrapper",
-                {
-                  opacity: 1,
-                  duration: 0.3,
-                  delay: 0,
-                }
-              );
-            },
-          });
-        },
-      });
-    } else if (!isDesktopOrTablet() && scrollTriggerInstance) {
-      scrollTriggerInstance.kill();
-      scrollTriggerInstance = null;
-      // Reset video to original position
-      if (videoGrow.parentElement !== originalParent) {
-        originalParent.appendChild(videoGrow);
+        }
       }
     }
-  }
 
-  // Initialize on load
-  initScrollTrigger();
+    initScrollTrigger();
 
-  // Handle window resize
-  let resizeTimer;
-  window.addEventListener("resize", () => {
-    clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(() => {
-      ScrollTrigger.refresh();
-      initScrollTrigger();
-    }, 250);
-  });
+    let resizeTimer;
+    window.addEventListener("resize", () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        if (scrollTriggerPlugin && scrollTriggerPlugin.refresh) {
+          scrollTriggerPlugin.refresh();
+        }
+        initScrollTrigger();
+      }, 250);
+    });
+
+    desktopZoomInitialized = true;
+    return true;
+  };
+
+  const initDesktopZoomWhenReady = () => {
+    const attemptInit = () => setupDesktopZoom();
+
+    if (window.AnimationManager?.onReady) {
+      AnimationManager.onReady(() => {
+        if (!attemptInit()) {
+          console.warn('[Reels] Unable to start zoom animation even after AnimationManager ready.');
+        }
+      });
+      return;
+    }
+
+    if (attemptInit()) {
+      return;
+    }
+
+    let attempts = 0;
+    const maxAttempts = 60;
+    const pollInterval = setInterval(() => {
+      attempts += 1;
+
+      if (attemptInit()) {
+        clearInterval(pollInterval);
+      } else if (attempts >= maxAttempts) {
+        clearInterval(pollInterval);
+        console.warn('[Reels] GSAP not available – zoom animation skipped.');
+      }
+    }, 100);
+  };
+
+  initDesktopZoomWhenReady();
 }
 
 // Mobile auto-scroll (independent of desktop animation)

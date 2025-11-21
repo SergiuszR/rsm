@@ -1,3 +1,39 @@
-/* RSM Scripts - Minified */
-$(document).ready(function(){let n=!1;$("[data-eye-detect]").on("mouseenter",function(){n=!0}).on("mouseleave",function(){n=!1,$("#eye-inner, #eye-inner_2").css({transform:"translate(0px, 0px)",transition:"transform 0.8s ease-out"})}),$(document).on("mousemove",function(t){if(!n)return;const e=t.clientX,o=t.clientY;$("#eye-inner, #eye-inner_2").each(function(){const n=$(this);n.css("transition","none");const t=this.getBoundingClientRect(),i=t.left+t.width/2,s=t.top+t.height/2,r=e-i,a=o-s,c=Math.sqrt(r*r+a*a),u=r/c*Math.min(c,15),m=a/c*Math.min(c,15);n.css("transform",`translate(${u}px, ${m}px)`)})})});
-//# sourceMappingURL=eye-anim.js.map
+$(document).ready(function() {
+    let isTracking = false;
+    
+    $('[data-eye-detect]').on('mouseenter', function() {
+        isTracking = true;
+    }).on('mouseleave', function() {
+        isTracking = false;
+        $('#eye-inner, #eye-inner_2').css({
+            'transform': 'translate(0px, 0px)',
+            'transition': 'transform 0.8s ease-out'
+        });
+    });
+    
+    $(document).on('mousemove', function(e) {
+        if (!isTracking) return;
+        
+        const mouseX = e.clientX;
+        const mouseY = e.clientY;
+        
+        $('#eye-inner, #eye-inner_2').each(function() {
+            const eye = $(this);
+            eye.css('transition', 'none');
+            
+            const eyeRect = this.getBoundingClientRect();
+            const eyeCenterX = eyeRect.left + eyeRect.width / 2;
+            const eyeCenterY = eyeRect.top + eyeRect.height / 2;
+            
+            const deltaX = mouseX - eyeCenterX;
+            const deltaY = mouseY - eyeCenterY;
+            const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+            
+            const maxDistance = 15;
+            const moveX = (deltaX / distance) * Math.min(distance, maxDistance);
+            const moveY = (deltaY / distance) * Math.min(distance, maxDistance);
+            
+            eye.css('transform', `translate(${moveX}px, ${moveY}px)`);
+        });
+    });
+});

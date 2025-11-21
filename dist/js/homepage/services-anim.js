@@ -1,3 +1,282 @@
-/* RSM Scripts - Minified */
-$(document).ready(function(){function e(){window.gsap&&window.ScrollTrigger?(gsap.registerPlugin(ScrollTrigger),gsap.timeline({scrollTrigger:{trigger:".section_services",start:"top 80%",end:"bottom 20%",toggleActions:"play none none reverse"}}).fromTo(".accordion_item",{opacity:0,x:-50},{opacity:1,x:0,duration:.8,stagger:.2,ease:"power2.out"})):console.warn("GSAP or ScrollTrigger not loaded for services-anim reveal")}window.matchMedia("(min-width: 992px)").matches&&function(){if(window.AnimationManager&&"function"==typeof window.AnimationManager.onReady)window.AnimationManager.onReady(e);else{let o=0;const r=100,a=setInterval(function(){o++,window.AnimationManager&&"function"==typeof window.AnimationManager.onReady?(clearInterval(a),window.AnimationManager.onReady(e)):o>=r&&(clearInterval(a),console.error("AnimationManager not loaded for services-anim reveal"))},50)}}()}),$(document).ready(function(){if(!window.matchMedia("(min-width: 992px)").matches)return;if(!window.gsap)return void console.warn("GSAP not loaded for services-anim hover");gsap.registerPlugin(),gsap.set(".accordion_body",{filter:"blur(10px)",opacity:.6});let e=null;document.querySelectorAll(".accordion_item").forEach((o,r)=>{const a=o.querySelector(".accordion_header"),t=o.querySelector(".accordion_body"),n=o.querySelector(".arrow-wrapper.is-absolute"),i=n?n.querySelector(".arrow"):null,l=n?n.querySelector(".star-background"):null;function c(e){const o=e.querySelector(".accordion_header"),r=e.querySelector(".accordion_body"),a=e.querySelector(".arrow-wrapper.is-absolute"),t=a?a.querySelector(".arrow"):null,n=a?a.querySelector(".star-background"):null;gsap.killTweensOf([o,r,t,n].filter(Boolean)),gsap.set(o,{y:"100%",opacity:0}),gsap.to(o,{y:"0%",opacity:1,duration:.4,ease:"power2.out",delay:.1}),gsap.to(r,{filter:"blur(10px)",opacity:.6,duration:.4,ease:"power2.in"}),t&&gsap.to(t,{rotation:0,duration:.4,ease:"power2.out"}),n&&gsap.to(n,{opacity:0,duration:.4,ease:"power2.out"})}o.addEventListener("mouseenter",function(){e!==o&&(e&&c(e),e=o,gsap.killTweensOf([a,t,i,l].filter(Boolean)),gsap.to(a,{y:"-100%",opacity:0,duration:.4,ease:"power1.in"}),gsap.to(t,{filter:"blur(0px)",opacity:1,duration:.5,ease:"power1.out"}),i&&gsap.to(i,{rotation:-45,duration:.5,ease:"power1.out"}),l&&gsap.to(l,{opacity:1,duration:.6,ease:"power1.out"}))}),o.addEventListener("mouseleave",r=>{setTimeout(()=>{e===o&&(c(o),e=null)},10)})});const o=document.querySelector(".layout_services_item-list");o&&o.addEventListener("mouseleave",()=>{if(e){const o=e.querySelector(".accordion_header"),r=e.querySelector(".accordion_body"),a=e.querySelector(".arrow-wrapper.is-absolute"),t=a?a.querySelector(".arrow"):null,n=a?a.querySelector(".star-background"):null;gsap.killTweensOf([o,r,t,n].filter(Boolean)),gsap.set(o,{y:"100%",opacity:0}),gsap.to(o,{y:"0%",opacity:1,duration:.7,ease:"power2",delay:.1}),gsap.to(r,{filter:"blur(10px)",opacity:.6,duration:.7,ease:"power2.in"}),t&&gsap.to(t,{rotation:0,duration:.7,ease:"power2"}),n&&gsap.to(n,{opacity:0,duration:.7,ease:"power2"}),e=null}})});
-//# sourceMappingURL=services-anim.js.map
+// On Reveal
+
+$(document).ready(function() {
+  // Only run on desktop (>= 992px)
+  if (!window.matchMedia('(min-width: 992px)').matches) {
+    return;
+  }
+  
+  // Wait for GSAP and ScrollTrigger
+  function initServicesReveal() {
+    if (!window.gsap || !window.ScrollTrigger) {
+      console.warn('GSAP or ScrollTrigger not loaded for services-anim reveal');
+      return;
+    }
+    
+    gsap.registerPlugin(ScrollTrigger);
+  
+  // Create timeline for accordion items
+  const tl = gsap.timeline({
+    scrollTrigger: {
+      trigger: ".section_services",
+      start: "top 80%",
+      end: "bottom 20%",
+      toggleActions: "play none none reverse"
+    }
+  });
+  
+  // Animate items from left with stagger
+  tl.fromTo('.accordion_item', 
+    {
+      opacity: 0,
+      x: -50
+    },
+    {
+      opacity: 1,
+      x: 0,
+      duration: 0.8,
+      stagger: 0.2,
+      ease: "power2.out"
+    }
+  );
+  }
+  
+  // Initialize when GSAP is ready using AnimationManager with polling fallback
+  (function waitForAnimationManager() {
+    if (window.AnimationManager && typeof window.AnimationManager.onReady === 'function') {
+      window.AnimationManager.onReady(initServicesReveal);
+    } else {
+      let attempts = 0;
+      const maxAttempts = 100; // 5s
+      const timer = setInterval(function() {
+        attempts++;
+        if (window.AnimationManager && typeof window.AnimationManager.onReady === 'function') {
+          clearInterval(timer);
+          window.AnimationManager.onReady(initServicesReveal);
+        } else if (attempts >= maxAttempts) {
+          clearInterval(timer);
+          console.error('AnimationManager not loaded for services-anim reveal');
+        }
+      }, 50);
+    }
+  })();
+});
+
+
+// On hover
+
+// Wait for DOM to be fully loaded
+$(document).ready(function() {
+  // Only run on desktop (>= 992px)
+  if (!window.matchMedia('(min-width: 992px)').matches) {
+    return;
+  }
+  
+  // Check GSAP availability
+  if (!window.gsap) {
+    console.warn('GSAP not loaded for services-anim hover');
+    return;
+  }
+  
+  // Initialize GSAP
+  gsap.registerPlugin();
+
+  // Set initial state for all accordion bodies (blur applied)
+  gsap.set('.accordion_body', {
+    filter: 'blur(10px)',
+    opacity: 0.6
+  });
+
+  // Track currently hovered item
+  let currentlyHovered = null;
+
+  // Create timeline for each accordion item
+  document.querySelectorAll('.accordion_item').forEach((item, index) => {
+    const header = item.querySelector('.accordion_header');
+    const body = item.querySelector('.accordion_body');
+    const arrowWrapper = item.querySelector('.arrow-wrapper.is-absolute');
+    const arrow = arrowWrapper ? arrowWrapper.querySelector('.arrow') : null;
+    const starBackground = arrowWrapper ? arrowWrapper.querySelector('.star-background') : null;
+    
+    // Function to activate item
+    function activateItem() {
+      // If this item is already active, do nothing
+      if (currentlyHovered === item) return;
+      
+      // Deactivate previously hovered item
+      if (currentlyHovered) {
+        deactivateItem(currentlyHovered);
+      }
+      
+      // Set this as currently hovered
+      currentlyHovered = item;
+      
+      // Kill any existing animations on this item
+      gsap.killTweensOf([header, body, arrow, starBackground].filter(Boolean));
+      
+      // Header goes way up with opacity fade
+gsap.to(header, {
+  y: '-100%',
+  opacity: 0,
+  duration: 0.4,
+  ease: "power1.in"
+});
+
+// Body loses blur and becomes visible
+gsap.to(body, {
+  filter: 'blur(0px)',
+  opacity: 1,
+  duration: 0.5,
+  ease: "power1.out"
+});
+
+// Rotate arrow 90 degrees clockwise
+if (arrow) {
+  gsap.to(arrow, {
+    rotation: -45,
+    duration: 0.5,
+    ease: "power1.out"
+  });
+}
+
+// Set star background opacity to 1
+if (starBackground) {
+  gsap.to(starBackground, {
+    opacity: 1,
+    duration: 0.6,
+    ease: "power1.out"
+  });
+}
+
+    }
+    
+    // Function to deactivate item
+    function deactivateItem(targetItem) {
+      const targetHeader = targetItem.querySelector('.accordion_header');
+      const targetBody = targetItem.querySelector('.accordion_body');
+      const targetArrowWrapper = targetItem.querySelector('.arrow-wrapper.is-absolute');
+      const targetArrow = targetArrowWrapper ? targetArrowWrapper.querySelector('.arrow') : null;
+      const targetStarBackground = targetArrowWrapper ? targetArrowWrapper.querySelector('.star-background') : null;
+      
+      // Kill any existing animations
+      gsap.killTweensOf([targetHeader, targetBody, targetArrow, targetStarBackground].filter(Boolean));
+      
+      // First set header to bottom position (invisible)
+      gsap.set(targetHeader, {
+        y: '100%',
+        opacity: 0
+      });
+      
+      // Then animate header rolling back to original position
+      gsap.to(targetHeader, {
+        y: '0%',
+        opacity: 1,
+        duration: 0.4,
+        ease: "power2.out",
+        delay: 0.1
+      });
+      
+      // Body gets blur back
+      gsap.to(targetBody, {
+        filter: 'blur(10px)',
+        opacity: 0.6,
+        duration: 0.4,
+        ease: "power2.in"
+      });
+      
+      // Rotate arrow back to 0 degrees
+      if (targetArrow) {
+        gsap.to(targetArrow, {
+          rotation: 0,
+          duration: 0.4,
+          ease: "power2.out"
+        });
+      }
+      
+      // Set star background opacity back to original (assuming 0)
+      if (targetStarBackground) {
+        gsap.to(targetStarBackground, {
+          opacity: 0,
+          duration: 0.4,
+          ease: "power2.out"
+        });
+      }
+    }
+    
+    // Mouse enter
+    item.addEventListener('mouseenter', activateItem);
+    
+    // Mouse leave - only deactivate if no other item is being hovered
+    item.addEventListener('mouseleave', (e) => {
+      // Small delay to check if mouse entered another accordion item
+      setTimeout(() => {
+        // If this item is still the currently hovered one, deactivate it
+        if (currentlyHovered === item) {
+          deactivateItem(item);
+          currentlyHovered = null;
+        }
+      }, 10);
+    });
+  });
+
+  // Global mouse leave for the entire accordion container
+  const container = document.querySelector('.layout_services_item-list');
+  if (container) {
+    container.addEventListener('mouseleave', () => {
+      if (currentlyHovered) {
+        const header = currentlyHovered.querySelector('.accordion_header');
+        const body = currentlyHovered.querySelector('.accordion_body');
+        const arrowWrapper = currentlyHovered.querySelector('.arrow-wrapper.is-absolute');
+        const arrow = arrowWrapper ? arrowWrapper.querySelector('.arrow') : null;
+        const starBackground = arrowWrapper ? arrowWrapper.querySelector('.star-background') : null;
+        
+        // Kill any existing animations
+        gsap.killTweensOf([header, body, arrow, starBackground].filter(Boolean));
+        
+        // First set header to bottom position (invisible)
+        gsap.set(header, {
+          y: '100%',
+          opacity: 0
+        });
+        
+        // Then animate header rolling back to original position
+        gsap.to(header, {
+          y: '0%',
+          opacity: 1,
+          duration: 0.7,
+          ease: "power2",
+          delay: 0.1
+        });
+        
+        // Body gets blur back
+        gsap.to(body, {
+          filter: 'blur(10px)',
+          opacity: 0.6,
+          duration: 0.7,
+          ease: "power2.in"
+        });
+        
+        // Rotate arrow back to 0 degrees
+        if (arrow) {
+          gsap.to(arrow, {
+            rotation: 0,
+            duration: 0.7,
+            ease: "power2"
+          });
+        }
+        
+        // Set star background opacity back to 0
+        if (starBackground) {
+          gsap.to(starBackground, {
+            opacity: 0,
+            duration: 0.7,
+            ease: "power2"
+          });
+        }
+        
+        currentlyHovered = null;
+      }
+    });
+  }
+
+});

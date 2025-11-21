@@ -1,3 +1,212 @@
-/* RSM Scripts - Minified */
-$(document).ready(function(){window.AnimationManager?function(){if(window.AnimationManager&&"function"==typeof window.AnimationManager.onReady)window.AnimationManager.onReady(n);else{let t=0;const e=100,o=setInterval(function(){t++,window.AnimationManager&&"function"==typeof window.AnimationManager.onReady?(clearInterval(o),window.AnimationManager.onReady(n)):t>=e&&(clearInterval(o),console.error("AnimationManager not loaded for navbar-anim"))},50)}function n(){const n=document.querySelector(".navbar_component");if(!n)return;const t=document.querySelectorAll(["section"].join(", "));function e(n){if(!n||"transparent"===n)return!1;let t,e,o,r=1;if(n.startsWith("rgb")){const a=n.match(/rgba?\(([^)]+)\)/);if(a){const n=a[1].split(",").map(n=>parseFloat(n.trim()));[t,e,o]=n,r=void 0!==n[3]?n[3]:1}}else if(n.startsWith("#")){const r=n.slice(1);3===r.length?(t=parseInt(r[0]+r[0],16),e=parseInt(r[1]+r[1],16),o=parseInt(r[2]+r[2],16)):6===r.length&&(t=parseInt(r.substr(0,2),16),e=parseInt(r.substr(2,2),16),o=parseInt(r.substr(4,2),16))}else{const r={black:[0,0,0],navy:[0,0,128],darkblue:[0,0,139],darkgreen:[0,100,0],darkcyan:[0,139,139],darkred:[139,0,0],purple:[128,0,128]};if(!r[n.toLowerCase()])return!1;[t,e,o]=r[n.toLowerCase()]}return void 0!==t&&void 0!==e&&void 0!==o&&(!(r<.1)&&(.299*t+.587*e+.114*o)/255<.5)}function o(n){let t=n;for(;t&&t!==document.documentElement;){const n=getComputedStyle(t),e=n.backgroundColor;if(e&&"rgba(0, 0, 0, 0)"!==e&&"transparent"!==e)return e;const o=n.backgroundImage;if(o&&"none"!==o)return"rgb(50, 50, 50)";t=t.parentElement}return"rgb(255, 255, 255)"}function r(){return window.innerWidth>=992}function a(){if(!r())return void n.classList.remove("is-contrast");const a=n.getBoundingClientRect(),i=a.top+a.height/2;let s=null;if(t.forEach(n=>{const t=n.getBoundingClientRect();t.top<=i&&t.bottom>=i&&(s=n)}),s){const t=e(o(s));n.classList.toggle("is-contrast",t)}else{const t=e(o(document.body));n.classList.toggle("is-contrast",t)}}let i,s,c=null;function l(){c&&(c.kill(),c=null),r()?c=ScrollTrigger.create({trigger:"body",start:"top top",end:"bottom bottom",onUpdate:a,onRefresh:a,invalidateOnRefresh:!0,scrub:0}):n.classList.remove("is-contrast")}l(),a(),window.addEventListener("resize",function(){clearTimeout(i),i=setTimeout(function(){l(),a()},150)},{passive:!0}),window.addEventListener("scroll",function(){r()&&(clearTimeout(s),s=setTimeout(a,50))},{passive:!0})}}():console.error("AnimationManager not loaded for navbar-anim")});
-//# sourceMappingURL=navbar-anim.js.map
+// Navbar color change on scroll
+
+$(document).ready(function() {
+    // Wait for GSAP and ScrollTrigger to be ready
+    if (!window.AnimationManager) {
+        console.error('AnimationManager not loaded for navbar-anim');
+        return;
+    }
+    
+    (function waitForAnimationManager() {
+        if (!window.AnimationManager || typeof window.AnimationManager.onReady !== 'function') {
+            let attempts = 0;
+            const maxAttempts = 100; // 5s
+            const timer = setInterval(function() {
+                attempts++;
+                if (window.AnimationManager && typeof window.AnimationManager.onReady === 'function') {
+                    clearInterval(timer);
+                    window.AnimationManager.onReady(init);
+                } else if (attempts >= maxAttempts) {
+                    clearInterval(timer);
+                    console.error('AnimationManager not loaded for navbar-anim');
+                }
+            }, 50);
+        } else {
+            window.AnimationManager.onReady(init);
+        }
+
+        function init() {
+        const navbar = document.querySelector('.navbar_component');
+        if (!navbar) return;
+
+// Webflow desktop breakpoint
+const DESKTOP_BREAKPOINT = 992;
+
+// Auto-detect potential sections with more comprehensive selectors
+const sectionSelectors = [
+  'section'
+];
+
+const sections = document.querySelectorAll(sectionSelectors.join(', '));
+
+// Enhanced color detection with better parsing
+function isColorDark(color) {
+  if (!color || color === 'transparent') return false;
+  
+  let r, g, b, a = 1;
+  
+  // Parse rgba/rgb
+  if (color.startsWith('rgb')) {
+    const matches = color.match(/rgba?\(([^)]+)\)/);
+    if (matches) {
+      const values = matches[1].split(',').map(v => parseFloat(v.trim()));
+      [r, g, b] = values;
+      a = values[3] !== undefined ? values[3] : 1;
+    }
+  }
+  // Parse hex colors
+  else if (color.startsWith('#')) {
+    const hex = color.slice(1);
+    if (hex.length === 3) {
+      r = parseInt(hex[0] + hex[0], 16);
+      g = parseInt(hex[1] + hex[1], 16);
+      b = parseInt(hex[2] + hex[2], 16);
+    } else if (hex.length === 6) {
+      r = parseInt(hex.substr(0, 2), 16);
+      g = parseInt(hex.substr(2, 2), 16);
+      b = parseInt(hex.substr(4, 2), 16);
+    }
+  }
+  // Handle named colors (basic ones)
+  else {
+    const namedColors = {
+      'black': [0, 0, 0],
+      'navy': [0, 0, 128],
+      'darkblue': [0, 0, 139],
+      'darkgreen': [0, 100, 0],
+      'darkcyan': [0, 139, 139],
+      'darkred': [139, 0, 0],
+      'purple': [128, 0, 128]
+    };
+    
+    if (namedColors[color.toLowerCase()]) {
+      [r, g, b] = namedColors[color.toLowerCase()];
+    } else {
+      return false; // Unknown color, assume light
+    }
+  }
+  
+  if (r === undefined || g === undefined || b === undefined) return false;
+  
+  // If alpha is very low, consider it transparent (light)
+  if (a < 0.1) return false;
+  
+  // Calculate relative luminance
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance < 0.5;
+}
+
+function getEffectiveBackgroundColor(element) {
+  let currentElement = element;
+  
+  while (currentElement && currentElement !== document.documentElement) {
+    const computedStyle = getComputedStyle(currentElement);
+    const bgColor = computedStyle.backgroundColor;
+    
+    if (bgColor && bgColor !== 'rgba(0, 0, 0, 0)' && bgColor !== 'transparent') {
+      return bgColor;
+    }
+    
+    // Also check for background images with dark overlays
+    const bgImage = computedStyle.backgroundImage;
+    if (bgImage && bgImage !== 'none') {
+      // If there's a background image, we might want to assume it could be dark
+      // This is a heuristic - you might want to adjust based on your use case
+      return 'rgb(50, 50, 50)'; // Assume dark for background images
+    }
+    
+    currentElement = currentElement.parentElement;
+  }
+  
+  return 'rgb(255, 255, 255)'; // Default to white
+}
+
+function isDesktop() {
+  return window.innerWidth >= DESKTOP_BREAKPOINT;
+}
+
+function updateNavbarContrast() {
+  // Only apply contrast logic on desktop breakpoint
+  if (!isDesktop()) {
+    // Remove contrast class on mobile/tablet
+    navbar.classList.remove('is-contrast');
+    return;
+  }
+
+  const navbarRect = navbar.getBoundingClientRect();
+  const navbarCenter = navbarRect.top + (navbarRect.height / 2);
+  
+  // Find the section at the navbar's center point
+  let targetSection = null;
+  
+  sections.forEach(section => {
+    const rect = section.getBoundingClientRect();
+    if (rect.top <= navbarCenter && rect.bottom >= navbarCenter) {
+      targetSection = section;
+    }
+  });
+  
+  if (targetSection) {
+    const bgColor = getEffectiveBackgroundColor(targetSection);
+    const isDark = isColorDark(bgColor);
+    
+    navbar.classList.toggle('is-contrast', isDark);
+  } else {
+    // Fallback: check body background
+    const bodyBg = getEffectiveBackgroundColor(document.body);
+    const isDark = isColorDark(bodyBg);
+    navbar.classList.toggle('is-contrast', isDark);
+  }
+}
+
+let scrollTriggerInstance = null;
+
+function setupScrollTrigger() {
+  // Kill existing instance if any
+  if (scrollTriggerInstance) {
+    scrollTriggerInstance.kill();
+    scrollTriggerInstance = null;
+  }
+
+  // Only set up ScrollTrigger on desktop
+  if (isDesktop()) {
+    scrollTriggerInstance = ScrollTrigger.create({
+      trigger: "body",
+      start: "top top",
+      end: "bottom bottom",
+      onUpdate: updateNavbarContrast,
+      onRefresh: updateNavbarContrast,
+      invalidateOnRefresh: true,
+      scrub: 0
+    });
+  } else {
+    // Reset navbar on mobile/tablet
+    navbar.classList.remove('is-contrast');
+  }
+}
+
+        // Initial setup
+        setupScrollTrigger();
+        updateNavbarContrast();
+        
+        // Handle resize to toggle between desktop and mobile behavior
+        let resizeTimeout;
+        window.addEventListener('resize', function() {
+          clearTimeout(resizeTimeout);
+          resizeTimeout = setTimeout(function() {
+            setupScrollTrigger();
+            updateNavbarContrast();
+          }, 150);
+        }, { passive: true });
+
+        // Scroll event listener (only active on desktop)
+        let scrollTimeout;
+        window.addEventListener('scroll', function() {
+          if (!isDesktop()) return;
+          
+          clearTimeout(scrollTimeout);
+          scrollTimeout = setTimeout(updateNavbarContrast, 50);
+        }, { passive: true });
+        }
+    })();
+});

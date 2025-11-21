@@ -1,3 +1,39 @@
-/* RSM Scripts - Minified */
-const isDesktop=window.innerWidth>991;if(isDesktop){const i=new Lenis({duration:1.05,easing:i=>Math.min(1,1.001-Math.pow(2,-10*i)),orientation:"vertical",gestureOrientation:"vertical",smoothWheel:!0,wheelMultiplier:1,smoothTouch:!1,touchMultiplier:2,infinite:!1,autoRaf:!1});function raf(t){i.raf(t),requestAnimationFrame(raf)}i.stop(),requestAnimationFrame(raf),i.on("scroll",()=>{window.ScrollTrigger&&ScrollTrigger.update()}),window.addEventListener("load",function(){i.start()})}
-//# sourceMappingURL=lenis.js.map
+const isDesktop = window.innerWidth > 991;
+
+if (isDesktop) {
+    const lenis = new Lenis({
+        duration: 1.05,
+        easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+        orientation: 'vertical',
+        gestureOrientation: 'vertical',
+        smoothWheel: true,
+        wheelMultiplier: 1,
+        smoothTouch: false,
+        touchMultiplier: 2,
+        infinite: false,
+        autoRaf: false,
+    });
+
+    // Stop lenis initially
+    lenis.stop();
+
+    function raf(time) {
+        lenis.raf(time);
+        requestAnimationFrame(raf);
+    }
+
+    requestAnimationFrame(raf);
+
+    // Integrate Lenis with ScrollTrigger
+    // This ensures ScrollTrigger updates when Lenis scrolls
+    lenis.on('scroll', () => {
+        if (window.ScrollTrigger) {
+            ScrollTrigger.update();
+        }
+    });
+
+    // Start lenis after document is fully loaded
+    window.addEventListener('load', function() {
+        lenis.start();
+    });
+}
