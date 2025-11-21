@@ -482,3 +482,28 @@ $(function () {
     $('[data-element="close-modal"]').on('click', unlockScroll);
     $(document).on('keydown', function (e) { if (e.key === 'Escape') unlockScroll(); });
 });
+
+
+$(document).ready(function() {
+  const wrapper = document.querySelector('.slide_items-wrapper');
+  const slides = Array.from(wrapper.querySelectorAll('.slide_items-item'));
+  
+  const cloneCount = 8; 
+  for (let i = 0; i < cloneCount; i++) {
+    slides.forEach(slide => {
+      const clone = slide.cloneNode(true);
+      wrapper.appendChild(clone);
+    });
+  }
+  
+  
+  let totalWidth = 0;
+  slides.forEach(slide => {
+    totalWidth += slide.offsetWidth + 20;
+  });
+  
+ 
+  wrapper.style.setProperty('--marquee-distance', `-${totalWidth}px`);
+  wrapper.classList.add('marquee-animate');
+});
+
