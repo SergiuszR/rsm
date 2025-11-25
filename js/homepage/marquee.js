@@ -87,8 +87,7 @@ $(document).ready(function () {
 
       cleanupMarquee(wrapper);
 
-      const initialWidth = firstInner.scrollWidth || marqueeEl.scrollWidth || firstInner.getBoundingClientRect().width;
-      if (!initialWidth) return;
+      const fallbackWidth = firstInner.scrollWidth || marqueeEl.scrollWidth || firstInner.getBoundingClientRect().width;
 
       const clone = firstInner.cloneNode(true);
       clone.setAttribute('aria-hidden', 'true');
@@ -107,7 +106,7 @@ $(document).ready(function () {
         marqueeNodes,
         logoItems,
         tween: null,
-        distance: initialWidth,
+        distance: fallbackWidth || 0,
         onResize: null,
         resizeObserver: null,
         remeasureTimers: [],
@@ -172,7 +171,7 @@ $(document).ready(function () {
               const numeric = parseFloat(xValue);
               if (!Number.isFinite(numeric)) return xValue;
               const looped = ((numeric % distance) + distance) % distance;
-              return looped + 'px';
+              return (looped - distance) + 'px';
             }
           }
         });
@@ -195,8 +194,11 @@ $(document).ready(function () {
         });
       }
 
-      normalizeMobileLayout(initialWidth);
-      updateTween(initialWidth);
+      const initialDistance = measureTrackWidth() || fallbackWidth;
+      if (!initialDistance) return;
+
+      normalizeMobileLayout(initialDistance);
+      updateTween(initialDistance);
 
       state.onResize = handleResize;
       window.addEventListener('resize', handleResize);
