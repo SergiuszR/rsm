@@ -190,7 +190,8 @@
                 refreshQueued: false,
                 lastVVWidth: (window.visualViewport && window.visualViewport.width) || window.innerWidth,
                 lastVVHeight: (window.visualViewport && window.visualViewport.height) || window.innerHeight,
-                originalRefresh: ScrollTrigger.refresh
+                originalRefresh: ScrollTrigger.refresh,
+                resizePatched: false
             };
 
             function isMobileWidth() {
@@ -225,6 +226,84 @@
                 return guardState.originalRefresh.apply(this, arguments);
             };
 
+            function patchWindowResizeListeners() {
+                if (guardState.resizePatched) return;
+                guardState.resizePatched = true;
+
+                const nativeAddEventListener = window.addEventListener.bind(window);
+                const nativeRemoveEventListener = window.removeEventListener.bind(window);
+                const resizeListenerMap = new WeakMap();
+
+                function getCaptureFlag(options) {
+                    if (typeof options === 'boolean') return options;
+                    if (options && typeof options === 'object') return !!options.capture;
+                    return false;
+                }
+
+                function shouldSkipResizeCallbacks() {
+                    return guardState.toolbarActive && isMobileWidth();
+                }
+
+                function shouldBypassGuard(listener, options) {
+                    return Boolean((listener && listener.__rsmAllowToolbarResize) || (options && options.__rsmAllowToolbarResize));
+                }
+
+                function wrapResizeListener(listener) {
+                    if (typeof listener === 'function') {
+                        return function wrappedResizeListener(event) {
+                            if (shouldSkipResizeCallbacks()) return;
+                            return listener.call(this, event);
+                        };
+                    }
+                    if (listener && typeof listener.handleEvent === 'function') {
+                        return {
+                            handleEvent: function(event) {
+                                if (shouldSkipResizeCallbacks()) return;
+                                return listener.handleEvent.call(listener, event);
+                            }
+                        };
+                    }
+                    return listener;
+                }
+
+                window.addEventListener = function(type, listener, options) {
+                    if (type === 'resize' && listener && !shouldBypassGuard(listener, options)) {
+                        const wrapped = wrapResizeListener(listener);
+                        const capture = getCaptureFlag(options);
+                        const existing = resizeListenerMap.get(listener) || [];
+                        existing.push({ wrapped, capture });
+                        resizeListenerMap.set(listener, existing);
+                        return nativeAddEventListener(type, wrapped, options);
+                    }
+                    return nativeAddEventListener(type, listener, options);
+                };
+
+                window.removeEventListener = function(type, listener, options) {
+                    if (type === 'resize' && listener && !shouldBypassGuard(listener, options) && resizeListenerMap.has(listener)) {
+                        const listeners = resizeListenerMap.get(listener);
+                        if (!listeners || listeners.length === 0) {
+                            return nativeRemoveEventListener(type, listener, options);
+                        }
+
+                        const capture = getCaptureFlag(options);
+                        const index = listeners.findIndex(item => item.capture === capture);
+                        const entry = index >= 0 ? listeners.splice(index, 1)[0] : listeners.pop();
+
+                        if (listeners.length === 0) {
+                            resizeListenerMap.delete(listener);
+                        } else {
+                            resizeListenerMap.set(listener, listeners);
+                        }
+
+                        if (entry && entry.wrapped) {
+                            return nativeRemoveEventListener(type, entry.wrapped, options);
+                        }
+                        return nativeRemoveEventListener(type, listener, options);
+                    }
+                    return nativeRemoveEventListener(type, listener, options);
+                };
+            }
+
             function handleViewportResize(width, height) {
                 const widthDelta = Math.abs(width - guardState.lastVVWidth);
                 const heightDelta = Math.abs(height - guardState.lastVVHeight);
@@ -237,6 +316,8 @@
                 }
             }
 
+            const nativeAddEventListener = window.addEventListener.bind(window);
+
             if (window.visualViewport && typeof window.visualViewport.addEventListener === 'function') {
                 try {
                     window.visualViewport.addEventListener('resize', function() {
@@ -245,11 +326,13 @@
                 } catch (e) {}
             } else {
                 try {
-                    window.addEventListener('resize', function() {
+                    nativeAddEventListener('resize', function() {
                         handleViewportResize(window.innerWidth, window.innerHeight);
                     }, { passive: true });
                 } catch (e) {}
             }
+
+            patchWindowResizeListeners();
 
             const refreshAfterOrientationChange = () => {
                 if (!window.ScrollTrigger) return;
