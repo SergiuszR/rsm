@@ -123,11 +123,42 @@ $(document).ready(function() {
     // Initial positioning
 
     
-    // Handle window resize - recalculate positions
-    $(window).on('resize', function() {
-        // Update ScrollTrigger positions
-        ScrollTrigger.refresh();
-    });
+    // Handle window resize - recalculate positions without fighting mobile URL-bar resizes
+    (function setupSafeResizeRefresh() {
+        const MOBILE_WIDTH_BREAKPOINT = 1024;
+        const WIDTH_EPSILON = 2; // ignore sub-pixel width jitter
+        const HEIGHT_JITTER_MAX = 220; // typical mobile chrome/safari toolbar delta
+        const TOOLBAR_SETTLE_DELAY = 400;
+
+        let lastViewportWidth = window.innerWidth;
+        let lastViewportHeight = window.innerHeight;
+        let toolbarResizeTimeout = null;
+
+        $(window).on('resize', function() {
+            if (!window.ScrollTrigger) return;
+
+            const currentWidth = window.innerWidth;
+            const currentHeight = window.innerHeight;
+            const widthDelta = Math.abs(currentWidth - lastViewportWidth);
+            const heightDelta = Math.abs(currentHeight - lastViewportHeight);
+            lastViewportWidth = currentWidth;
+            lastViewportHeight = currentHeight;
+
+            const isMobileViewport = currentWidth < MOBILE_WIDTH_BREAKPOINT;
+            const heightOnlyResize = widthDelta <= WIDTH_EPSILON && heightDelta > 0 && heightDelta <= HEIGHT_JITTER_MAX;
+
+            if (isMobileViewport && heightOnlyResize) {
+                clearTimeout(toolbarResizeTimeout);
+                toolbarResizeTimeout = setTimeout(function() {
+                    try { ScrollTrigger.refresh(); } catch (e) {}
+                }, TOOLBAR_SETTLE_DELAY);
+                return;
+            }
+
+            // Desktop or real resizes refresh immediately
+            ScrollTrigger.refresh();
+        });
+    })();
     }
     
     // Initialize when GSAP is ready using AnimationManager with polling fallback
