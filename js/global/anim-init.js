@@ -13,6 +13,7 @@
         contentLoadedCallbacks: [],
         scriptsLoaded: 0,
         totalScripts: 0,
+        _mobileResizeGuardsConfigured: false,
         
         /**
          * Register a callback to run when GSAP and ScrollTrigger are ready
@@ -45,6 +46,9 @@
                     
                     // Register ScrollTrigger plugin
                     gsap.registerPlugin(ScrollTrigger);
+
+                    // Prevent ScrollTrigger from pausing scroll when mobile UI chrome resizes the viewport
+                    this.setupMobileResizeGuards();
                     
                     // Run all ready callbacks
                     this.readyCallbacks.forEach((callback, index) => {
@@ -160,6 +164,31 @@
             if (this.totalScripts > 0 && this.scriptsLoaded >= this.totalScripts) {
                 this.refreshScrollTrigger();
             }
+        },
+
+        /**
+         * Avoid ScrollTrigger refresh storms on iOS/Android address-bar resizes
+         */
+        setupMobileResizeGuards: function() {
+            if (this._mobileResizeGuardsConfigured || !window.ScrollTrigger) return;
+            this._mobileResizeGuardsConfigured = true;
+
+            try {
+                if (typeof ScrollTrigger.config === 'function') {
+                    ScrollTrigger.config({ ignoreMobileResize: true });
+                }
+            } catch (e) {}
+
+            const refreshAfterOrientationChange = () => {
+                if (!window.ScrollTrigger) return;
+                setTimeout(() => {
+                    try { ScrollTrigger.refresh(); } catch (e) {}
+                }, 350);
+            };
+
+            try {
+                window.addEventListener('orientationchange', refreshAfterOrientationChange, { passive: true });
+            } catch (e) {}
         }
     };
     
