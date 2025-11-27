@@ -173,16 +173,90 @@
             if (this._mobileResizeGuardsConfigured || !window.ScrollTrigger) return;
             this._mobileResizeGuardsConfigured = true;
 
+            const MOBILE_WIDTH_MAX = 1024;
+            const WIDTH_EPSILON = 1;
+            const HEIGHT_JITTER_MAX = 240;
+            const TOOLBAR_SETTLE_DELAY = 450;
+
             try {
                 if (typeof ScrollTrigger.config === 'function') {
                     ScrollTrigger.config({ ignoreMobileResize: true });
                 }
             } catch (e) {}
 
+            const guardState = {
+                toolbarActive: false,
+                timer: null,
+                refreshQueued: false,
+                lastVVWidth: (window.visualViewport && window.visualViewport.width) || window.innerWidth,
+                lastVVHeight: (window.visualViewport && window.visualViewport.height) || window.innerHeight,
+                originalRefresh: ScrollTrigger.refresh
+            };
+
+            function isMobileWidth() {
+                return window.innerWidth <= MOBILE_WIDTH_MAX;
+            }
+
+            function flushDeferredRefresh() {
+                if (!guardState.refreshQueued) return;
+                guardState.refreshQueued = false;
+                try {
+                    guardState.originalRefresh.call(ScrollTrigger);
+                } catch (e) {}
+            }
+
+            function endToolbarSuspension() {
+                guardState.toolbarActive = false;
+                flushDeferredRefresh();
+            }
+
+            function scheduleToolbarSuspension() {
+                if (!isMobileWidth()) return;
+                guardState.toolbarActive = true;
+                clearTimeout(guardState.timer);
+                guardState.timer = setTimeout(endToolbarSuspension, TOOLBAR_SETTLE_DELAY);
+            }
+
+            ScrollTrigger.refresh = function() {
+                if (guardState.toolbarActive && isMobileWidth()) {
+                    guardState.refreshQueued = true;
+                    return;
+                }
+                return guardState.originalRefresh.apply(this, arguments);
+            };
+
+            function handleViewportResize(width, height) {
+                const widthDelta = Math.abs(width - guardState.lastVVWidth);
+                const heightDelta = Math.abs(height - guardState.lastVVHeight);
+                guardState.lastVVWidth = width;
+                guardState.lastVVHeight = height;
+
+                const heightOnlyChange = widthDelta <= WIDTH_EPSILON && heightDelta > 0 && heightDelta <= HEIGHT_JITTER_MAX;
+                if (heightOnlyChange) {
+                    scheduleToolbarSuspension();
+                }
+            }
+
+            if (window.visualViewport && typeof window.visualViewport.addEventListener === 'function') {
+                try {
+                    window.visualViewport.addEventListener('resize', function() {
+                        handleViewportResize(window.visualViewport.width, window.visualViewport.height);
+                    }, { passive: true });
+                } catch (e) {}
+            } else {
+                try {
+                    window.addEventListener('resize', function() {
+                        handleViewportResize(window.innerWidth, window.innerHeight);
+                    }, { passive: true });
+                } catch (e) {}
+            }
+
             const refreshAfterOrientationChange = () => {
                 if (!window.ScrollTrigger) return;
                 setTimeout(() => {
-                    try { ScrollTrigger.refresh(); } catch (e) {}
+                    guardState.toolbarActive = false;
+                    flushDeferredRefresh();
+                    try { guardState.originalRefresh.call(ScrollTrigger); } catch (e) {}
                 }, 350);
             };
 
