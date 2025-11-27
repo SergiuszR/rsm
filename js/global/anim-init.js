@@ -177,10 +177,14 @@
             const WIDTH_EPSILON = 1;
             const HEIGHT_JITTER_MAX = 240;
             const TOOLBAR_SETTLE_DELAY = 450;
+            const IS_TOUCH_VIEWPORT = (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) || 'ontouchstart' in window;
 
             try {
                 if (typeof ScrollTrigger.config === 'function') {
                     ScrollTrigger.config({ ignoreMobileResize: true });
+                    if (IS_TOUCH_VIEWPORT) {
+                        ScrollTrigger.config({ autoRefreshEvents: 'visibilitychange,DOMContentLoaded,load' });
+                    }
                 }
             } catch (e) {}
 
@@ -191,8 +195,23 @@
                 lastVVWidth: (window.visualViewport && window.visualViewport.width) || window.innerWidth,
                 lastVVHeight: (window.visualViewport && window.visualViewport.height) || window.innerHeight,
                 originalRefresh: ScrollTrigger.refresh,
-                resizePatched: false
+                resizePatched: false,
+                normalizer: null
             };
+
+            if (IS_TOUCH_VIEWPORT && typeof ScrollTrigger.normalizeScroll === 'function') {
+                try {
+                    guardState.normalizer = ScrollTrigger.normalizeScroll({
+                        allowNestedScroll: true,
+                        lockAxis: false,
+                        momentum: 0.85,
+                        speed: 1,
+                        type: 'touch,wheel',
+                        target: window,
+                        disable: () => !isMobileWidth()
+                    });
+                } catch (e) {}
+            }
 
             function isMobileWidth() {
                 return window.innerWidth <= MOBILE_WIDTH_MAX;
