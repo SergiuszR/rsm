@@ -35,20 +35,9 @@ $(document).ready(function() {
         window.scrollTo(0, scrollTop || 0);
     }
 
-    function ensureModalDisplay() {
-        // Webflow interactions sometimes leave inline display:none; force flex so CSS can animate
-        $modal.each(function() {
-            this.style.removeProperty('display');
-            if (window.getComputedStyle(this).display === 'none') {
-                this.style.display = 'flex';
-            }
-        });
-    }
-
     function openModal(e) {
         if (e) e.preventDefault();
         if (!$modal.length) return;
-        ensureModalDisplay();
         $modal.addClass('show');
         lockScroll();
     }
