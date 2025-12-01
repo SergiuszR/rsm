@@ -160,6 +160,242 @@ function cancelWrapperRetry() {
   pendingWrapperRetry = null;
 }
 
+function isLikelyMobileEnvironment() {
+  if (typeof window === 'undefined') return false;
+  if (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) {
+    return true;
+  }
+  const ua = (typeof navigator !== 'undefined' && navigator.userAgent) ? navigator.userAgent : '';
+  return /Android|iP(hone|ad|od)|Mobile|Samsung|Pixel|OnePlus/i.test(ua);
+}
+
+function prefersReducedMotion() {
+  if (typeof window === 'undefined' || !window.matchMedia) return false;
+  try {
+    return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  } catch (err) {
+    return false;
+  }
+}
+
+function supportsNativeSmoothScroll() {
+  if (typeof document === 'undefined' || !document.documentElement) return false;
+  return 'scrollBehavior' in document.documentElement.style;
+}
+
+function createMobileScrollNudgeController(wrapper) {
+  const noop = { cleanup: function () {} };
+  if (!wrapper || prefersReducedMotion() || !isLikelyMobileEnvironment()) {
+    return noop;
+  }
+
+  let hasNudged = false;
+  let observer = null;
+  let pendingTimeout = null;
+  let pendingDelays = [];
+  const hasSmoothScroll = supportsNativeSmoothScroll();
+
+  function settleDelayEntries() {
+    if (!pendingDelays.length) return;
+    const entries = pendingDelays.slice();
+    pendingDelays.length = 0;
+    entries.forEach((entry) => {
+      if (entry.done) return;
+      entry.done = true;
+      if (entry.cancel) {
+        try { entry.cancel(); } catch (err) {}
+      }
+      if (typeof entry.resolve === 'function') {
+        try { entry.resolve(); } catch (err) {}
+      }
+    });
+  }
+
+  function clearTimers() {
+    if (pendingTimeout) {
+      clearTimeout(pendingTimeout);
+      pendingTimeout = null;
+    }
+    settleDelayEntries();
+  }
+
+  function disconnectObserver() {
+    if (observer) {
+      observer.disconnect();
+      observer = null;
+    }
+  }
+
+  function removeDelayEntry(entry) {
+    const idx = pendingDelays.indexOf(entry);
+    if (idx !== -1) {
+      pendingDelays.splice(idx, 1);
+    }
+  }
+
+  function smoothScrollTo(targetLeft) {
+    return new Promise((resolve) => {
+      if (hasSmoothScroll && typeof wrapper.scrollTo === 'function') {
+        const current = wrapper.scrollLeft;
+        wrapper.scrollTo({ left: targetLeft, behavior: 'smooth' });
+        const duration = Math.min(1600, Math.max(450, Math.abs(current - targetLeft) * 4));
+        const entry = { id: null, resolve, done: false, cancel: null };
+        entry.id = setTimeout(() => {
+          if (entry.done) return;
+          entry.done = true;
+          entry.id = null;
+          removeDelayEntry(entry);
+          resolve();
+        }, duration);
+        entry.cancel = () => {
+          if (entry.id !== null) {
+            clearTimeout(entry.id);
+            entry.id = null;
+          }
+        };
+        pendingDelays.push(entry);
+        return;
+      }
+
+      if (typeof requestAnimationFrame !== 'function') {
+        wrapper.scrollLeft = targetLeft;
+        resolve();
+        return;
+      }
+
+      const start = wrapper.scrollLeft;
+      const delta = targetLeft - start;
+      const duration = 600;
+      let startTime = null;
+
+      function ease(progress) {
+        return progress < 0.5
+          ? 4 * progress * progress * progress
+          : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+      }
+
+      function animate(timestamp) {
+        if (startTime === null) startTime = timestamp;
+        const rawProgress = Math.min(1, (timestamp - startTime) / duration);
+        wrapper.scrollLeft = start + delta * ease(rawProgress);
+        if (rawProgress < 1) {
+          requestAnimationFrame(animate);
+        } else {
+          resolve();
+        }
+      }
+
+      const rafEntry = { id: null, resolve, done: false, cancel: null };
+      const rafCallback = (timestamp) => {
+        if (startTime === null) startTime = timestamp;
+        const rawProgress = Math.min(1, (timestamp - startTime) / duration);
+        wrapper.scrollLeft = start + delta * ease(rawProgress);
+        if (rawProgress < 1 && typeof requestAnimationFrame === 'function') {
+          rafEntry.id = requestAnimationFrame(rafCallback);
+        } else {
+          rafEntry.done = true;
+          rafEntry.id = null;
+          removeDelayEntry(rafEntry);
+          resolve();
+        }
+      };
+
+      rafEntry.cancel = () => {
+        if (typeof cancelAnimationFrame === 'function' && rafEntry.id) {
+          cancelAnimationFrame(rafEntry.id);
+          rafEntry.id = null;
+        }
+      };
+
+      rafEntry.id = typeof requestAnimationFrame === 'function' ? requestAnimationFrame(rafCallback) : null;
+      pendingDelays.push(rafEntry);
+    });
+  }
+
+  function delay(ms) {
+    return new Promise((resolve) => {
+      const entry = { id: null, resolve, done: false, cancel: null };
+      entry.id = setTimeout(() => {
+        if (entry.done) return;
+        entry.done = true;
+        entry.id = null;
+        removeDelayEntry(entry);
+        resolve();
+      }, ms);
+      entry.cancel = () => {
+        if (entry.id !== null) {
+          clearTimeout(entry.id);
+          entry.id = null;
+        }
+      };
+      pendingDelays.push(entry);
+    });
+  }
+
+  function runNudgeSequence(overflow) {
+    if (hasNudged || overflow <= 0) return;
+    hasNudged = true;
+
+    const distance = Math.min(overflow, Math.max(wrapper.clientWidth * 0.55, 140));
+
+    smoothScrollTo(distance)
+      .then(() => delay(900))
+      .then(() => smoothScrollTo(0))
+      .catch(() => {});
+  }
+
+  function scheduleNudge(attempt) {
+    if (hasNudged) return;
+    const overflow = wrapper.scrollWidth - wrapper.clientWidth;
+    if (overflow <= 6) {
+      if (attempt >= 6) return;
+      pendingTimeout = setTimeout(() => {
+        pendingTimeout = null;
+        scheduleNudge(attempt + 1);
+      }, 450);
+      return;
+    }
+    runNudgeSequence(overflow);
+  }
+
+  function userInteractionHandler() {
+    if (hasNudged) return;
+    hasNudged = true;
+    clearTimers();
+    disconnectObserver();
+  }
+
+  wrapper.addEventListener('touchstart', userInteractionHandler, { passive: true });
+  wrapper.addEventListener('wheel', userInteractionHandler, { passive: true });
+  wrapper.addEventListener('pointerdown', userInteractionHandler, { passive: true });
+
+  if ('IntersectionObserver' in window) {
+    observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        scheduleNudge(0);
+        disconnectObserver();
+      });
+    }, { threshold: 0.45 });
+    observer.observe(wrapper);
+  } else {
+    pendingTimeout = setTimeout(() => {
+      pendingTimeout = null;
+      scheduleNudge(0);
+    }, 1200);
+  }
+
+  return {
+    cleanup: function () {
+      wrapper.removeEventListener('touchstart', userInteractionHandler);
+      wrapper.removeEventListener('wheel', userInteractionHandler);
+      wrapper.removeEventListener('pointerdown', userInteractionHandler);
+      clearTimers();
+      disconnectObserver();
+    }
+  };
+}
+
 function initMobileAutoScroll() {
   // Mobile Landscape and below (<= 767px)
   // Use window.innerWidth for consistency, but also check for mobile user agent as fallback
@@ -185,6 +421,7 @@ function initMobileAutoScroll() {
   cancelWrapperRetry();
 
   wrappers.forEach((wrapper) => {
+    const scrollNudgeController = createMobileScrollNudgeController(wrapper);
     // Enable horizontal scrolling on each wrapper regardless of current width.
     // Content (videos/images) often loads asynchronously on mobile, so we can't
     // rely on scrollWidth at init time to decide whether to set up the loop.
@@ -258,9 +495,12 @@ function initMobileAutoScroll() {
       if (rafId) cancelAnimationFrame(rafId);
       wrapper.style.overflowX = '';
       wrapper.style.overflowY = '';
+      wrapper.style.scrollBehavior = '';
+      wrapper.style.webkitOverflowScrolling = '';
       wrapper.removeEventListener('touchstart', pause);
       wrapper.removeEventListener('touchend', resume);
       wrapper.removeEventListener('touchcancel', resume);
+      scrollNudgeController.cleanup();
     };
 
     mobileAutoScrollControllers.push({ cleanup: cleanup });
