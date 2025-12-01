@@ -185,69 +185,114 @@ function initMobileAutoScroll() {
   cancelWrapperRetry();
 
   wrappers.forEach((wrapper) => {
-    // Enable horizontal scrolling on each wrapper regardless of current width.
-    // Content (videos/images) often loads asynchronously on mobile, so we can't
-    // rely on scrollWidth at init time to decide whether to set up the loop.
+    // Enable horizontal scrolling on each wrapper
     wrapper.style.overflowX = 'scroll';
     wrapper.style.overflowY = 'hidden';
-    wrapper.style.scrollBehavior = 'auto';
     wrapper.style.webkitOverflowScrolling = 'touch';
-    // Do not override layout display/position — Webflow controls grid/flex there.
 
     let isPaused = false;
-    let intervalId = null;
-    const speedPxPerFrame = 1; // px per interval tick (~60fps = 28px/sec)
+    let animationRunning = false;
     let direction = 1; // 1 = right, -1 = left
-    const intervalMs = 32; // ~30fps, more reliable on mobile than RAF
-
-    function tick() {
-      if (isPaused) {
-        return;
-      }
-
-      const maxScroll = wrapper.scrollWidth - wrapper.clientWidth;
-      if (maxScroll <= 0) {
-        return;
-      }
-
-      const delta = speedPxPerFrame * direction;
-      let next = wrapper.scrollLeft + delta;
+    let hasUserInteracted = false;
+    let timeoutId = null;
+    
+    function animateScroll() {
+      if (isPaused || !animationRunning) return;
       
-      if (next >= maxScroll) {
-        next = maxScroll;
+      const maxScroll = wrapper.scrollWidth - wrapper.clientWidth;
+      
+      if (maxScroll <= 0) {
+        // Content not loaded yet, retry
+        timeoutId = setTimeout(animateScroll, 100);
+        return;
+      }
+
+      const currentScroll = wrapper.scrollLeft;
+      const step = 1 * direction;
+      let nextScroll = currentScroll + step;
+      
+      if (nextScroll >= maxScroll) {
+        nextScroll = maxScroll;
         direction = -1;
-      } else if (next <= 0) {
-        next = 0;
+      } else if (nextScroll <= 0) {
+        nextScroll = 0;
         direction = 1;
       }
       
-      wrapper.scrollLeft = next;
+      // Try scrollTo with behavior instant (more compatible)
+      try {
+        wrapper.scrollTo({ left: nextScroll, behavior: 'instant' });
+      } catch (e) {
+        wrapper.scrollLeft = nextScroll;
+      }
+      
+      if (animationRunning && !isPaused) {
+        timeoutId = setTimeout(animateScroll, 30);
+      }
     }
 
-    // Pause on user interaction
-    const pause = () => { 
-      isPaused = true; 
+    // On first user interaction, just mark it - don't pause permanently
+    const onFirstInteraction = () => {
+      hasUserInteracted = true;
+      isPaused = true;
     };
-    const resume = () => { 
+    
+    const onInteractionEnd = () => {
       isPaused = false;
+      if (animationRunning) {
+        animateScroll();
+      }
     };
 
-    wrapper.addEventListener('touchstart', pause, { passive: true });
-    wrapper.addEventListener('touchend', resume, { passive: true });
-    wrapper.addEventListener('touchcancel', resume, { passive: true });
+    wrapper.addEventListener('touchstart', onFirstInteraction, { passive: true });
+    wrapper.addEventListener('touchend', onInteractionEnd, { passive: true });
+    wrapper.addEventListener('touchcancel', onInteractionEnd, { passive: true });
+    
+    // Also listen for scroll events - if user scrolls manually, we know interaction works
+    const onManualScroll = () => {
+      if (!hasUserInteracted) {
+        hasUserInteracted = true;
+        console.log('[Reels] User scroll detected, auto-scroll should now work');
+      }
+    };
+    wrapper.addEventListener('scroll', onManualScroll, { passive: true });
 
-    // Use setInterval instead of RAF - more reliable on mobile browsers
-    intervalId = setInterval(tick, intervalMs);
+    // Start animation when element becomes visible
+    let observer = null;
+    if ('IntersectionObserver' in window) {
+      observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && !animationRunning) {
+            animationRunning = true;
+            console.log('[Reels] Wrapper visible, starting auto-scroll. MaxScroll:', wrapper.scrollWidth - wrapper.clientWidth);
+            // Delay to ensure content is rendered
+            timeoutId = setTimeout(animateScroll, 800);
+          } else if (!entry.isIntersecting) {
+            animationRunning = false;
+            if (timeoutId) {
+              clearTimeout(timeoutId);
+              timeoutId = null;
+            }
+          }
+        });
+      }, { threshold: 0.1 });
+      observer.observe(wrapper);
+    } else {
+      animationRunning = true;
+      timeoutId = setTimeout(animateScroll, 1000);
+    }
 
     const cleanup = function() {
-      if (intervalId) clearInterval(intervalId);
+      animationRunning = false;
+      if (timeoutId) clearTimeout(timeoutId);
+      if (observer) observer.disconnect();
       wrapper.style.overflowX = '';
       wrapper.style.overflowY = '';
-      wrapper.style.scrollBehavior = '';
       wrapper.style.webkitOverflowScrolling = '';
-      wrapper.removeEventListener('touchstart', pause);
-      wrapper.removeEventListener('touchend', resume);
-      wrapper.removeEventListener('touchcancel', resume);
+      wrapper.removeEventListener('touchstart', onFirstInteraction);
+      wrapper.removeEventListener('touchend', onInteractionEnd);
+      wrapper.removeEventListener('touchcancel', onInteractionEnd);
+      wrapper.removeEventListener('scroll', onManualScroll);
     };
 
     mobileAutoScrollControllers.push({ cleanup: cleanup });
