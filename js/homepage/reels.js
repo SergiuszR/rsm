@@ -178,11 +178,6 @@ function prefersReducedMotion() {
   }
 }
 
-function supportsNativeSmoothScroll() {
-  if (typeof document === 'undefined' || !document.documentElement) return false;
-  return 'scrollBehavior' in document.documentElement.style;
-}
-
 function createMobileScrollNudgeController(wrapper) {
   const noop = { cleanup: function () {} };
   if (!wrapper || prefersReducedMotion() || !isLikelyMobileEnvironment()) {
@@ -192,31 +187,19 @@ function createMobileScrollNudgeController(wrapper) {
   let hasNudged = false;
   let observer = null;
   let pendingTimeout = null;
-  let pendingDelays = [];
-  const hasSmoothScroll = supportsNativeSmoothScroll();
-
-  function settleDelayEntries() {
-    if (!pendingDelays.length) return;
-    const entries = pendingDelays.slice();
-    pendingDelays.length = 0;
-    entries.forEach((entry) => {
-      if (entry.done) return;
-      entry.done = true;
-      if (entry.cancel) {
-        try { entry.cancel(); } catch (err) {}
-      }
-      if (typeof entry.resolve === 'function') {
-        try { entry.resolve(); } catch (err) {}
-      }
-    });
-  }
+  let activeDragRaf = null;
+  let cancelled = false;
 
   function clearTimers() {
     if (pendingTimeout) {
       clearTimeout(pendingTimeout);
       pendingTimeout = null;
     }
-    settleDelayEntries();
+    if (activeDragRaf) {
+      cancelAnimationFrame(activeDragRaf);
+      activeDragRaf = null;
+    }
+    cancelled = true;
   }
 
   function disconnectObserver() {
@@ -226,121 +209,231 @@ function createMobileScrollNudgeController(wrapper) {
     }
   }
 
-  function removeDelayEntry(entry) {
-    const idx = pendingDelays.indexOf(entry);
-    if (idx !== -1) {
-      pendingDelays.splice(idx, 1);
+  // Create a synthetic Touch object
+  function createTouch(target, x, y, id) {
+    if (typeof Touch === 'function') {
+      try {
+        return new Touch({
+          identifier: id,
+          target: target,
+          clientX: x,
+          clientY: y,
+          screenX: x,
+          screenY: y,
+          pageX: x + window.scrollX,
+          pageY: y + window.scrollY,
+          radiusX: 25,
+          radiusY: 25,
+          rotationAngle: 0,
+          force: 1
+        });
+      } catch (e) {
+        // fallback below
+      }
+    }
+    // Fallback for older browsers
+    return {
+      identifier: id,
+      target: target,
+      clientX: x,
+      clientY: y,
+      screenX: x,
+      screenY: y,
+      pageX: x + window.scrollX,
+      pageY: y + window.scrollY,
+      radiusX: 25,
+      radiusY: 25,
+      rotationAngle: 0,
+      force: 1
+    };
+  }
+
+  // Create and dispatch a TouchEvent
+  function dispatchTouchEvent(type, target, touch) {
+    const touchList = [touch];
+    
+    // Try native TouchEvent constructor first
+    if (typeof TouchEvent === 'function') {
+      try {
+        const evt = new TouchEvent(type, {
+          bubbles: true,
+          cancelable: true,
+          view: window,
+          touches: type === 'touchend' ? [] : touchList,
+          targetTouches: type === 'touchend' ? [] : touchList,
+          changedTouches: touchList
+        });
+        target.dispatchEvent(evt);
+        return;
+      } catch (e) {
+        // fallback below
+      }
+    }
+
+    // Fallback: use CustomEvent with touch properties
+    try {
+      const evt = new CustomEvent(type, {
+        bubbles: true,
+        cancelable: true
+      });
+      evt.touches = type === 'touchend' ? [] : touchList;
+      evt.targetTouches = type === 'touchend' ? [] : touchList;
+      evt.changedTouches = touchList;
+      target.dispatchEvent(evt);
+    } catch (e) {
+      // Silently fail - scroll will just not animate
     }
   }
 
-  function smoothScrollTo(targetLeft) {
+  // Simulate a drag gesture by dispatching touch events over time
+  function simulateDrag(startX, endX, duration) {
     return new Promise((resolve) => {
-      if (hasSmoothScroll && typeof wrapper.scrollTo === 'function') {
-        const current = wrapper.scrollLeft;
-        wrapper.scrollTo({ left: targetLeft, behavior: 'smooth' });
-        const duration = Math.min(1600, Math.max(450, Math.abs(current - targetLeft) * 4));
-        const entry = { id: null, resolve, done: false, cancel: null };
-        entry.id = setTimeout(() => {
-          if (entry.done) return;
-          entry.done = true;
-          entry.id = null;
-          removeDelayEntry(entry);
-          resolve();
-        }, duration);
-        entry.cancel = () => {
-          if (entry.id !== null) {
-            clearTimeout(entry.id);
-            entry.id = null;
-          }
-        };
-        pendingDelays.push(entry);
-        return;
-      }
-
-      if (typeof requestAnimationFrame !== 'function') {
-        wrapper.scrollLeft = targetLeft;
+      if (cancelled) {
         resolve();
         return;
       }
 
-      const start = wrapper.scrollLeft;
-      const delta = targetLeft - start;
-      const duration = 600;
-      let startTime = null;
+      const rect = wrapper.getBoundingClientRect();
+      const centerY = rect.top + rect.height / 2;
+      const touchId = Date.now();
+      
+      // Start position (relative to viewport)
+      let currentX = rect.left + startX;
+      const targetX = rect.left + endX;
+      const deltaX = targetX - currentX;
+      
+      const startTime = performance.now();
+      
+      // Dispatch touchstart
+      const startTouch = createTouch(wrapper, currentX, centerY, touchId);
+      dispatchTouchEvent('touchstart', wrapper, startTouch);
 
-      function ease(progress) {
-        return progress < 0.5
-          ? 4 * progress * progress * progress
-          : 1 - Math.pow(-2 * progress + 2, 3) / 2;
-      }
+      function animateMove(now) {
+        if (cancelled) {
+          // End the touch immediately
+          const endTouch = createTouch(wrapper, currentX, centerY, touchId);
+          dispatchTouchEvent('touchend', wrapper, endTouch);
+          resolve();
+          return;
+        }
 
-      function animate(timestamp) {
-        if (startTime === null) startTime = timestamp;
-        const rawProgress = Math.min(1, (timestamp - startTime) / duration);
-        wrapper.scrollLeft = start + delta * ease(rawProgress);
-        if (rawProgress < 1) {
-          requestAnimationFrame(animate);
+        const elapsed = now - startTime;
+        const progress = Math.min(1, elapsed / duration);
+        
+        // Ease out for natural feel
+        const easedProgress = 1 - Math.pow(1 - progress, 3);
+        currentX = rect.left + startX + (deltaX * easedProgress);
+
+        const moveTouch = createTouch(wrapper, currentX, centerY, touchId);
+        dispatchTouchEvent('touchmove', wrapper, moveTouch);
+
+        if (progress < 1) {
+          activeDragRaf = requestAnimationFrame(animateMove);
         } else {
+          // Dispatch touchend
+          const endTouch = createTouch(wrapper, currentX, centerY, touchId);
+          dispatchTouchEvent('touchend', wrapper, endTouch);
+          activeDragRaf = null;
           resolve();
         }
       }
 
-      const rafEntry = { id: null, resolve, done: false, cancel: null };
-      const rafCallback = (timestamp) => {
-        if (startTime === null) startTime = timestamp;
-        const rawProgress = Math.min(1, (timestamp - startTime) / duration);
-        wrapper.scrollLeft = start + delta * ease(rawProgress);
-        if (rawProgress < 1 && typeof requestAnimationFrame === 'function') {
-          rafEntry.id = requestAnimationFrame(rafCallback);
+      activeDragRaf = requestAnimationFrame(animateMove);
+    });
+  }
+
+  // Fallback: directly animate scrollLeft if touch simulation doesn't work
+  function directScrollNudge(distance) {
+    return new Promise((resolve) => {
+      if (cancelled) {
+        resolve();
+        return;
+      }
+
+      const startScroll = wrapper.scrollLeft;
+      const targetScroll = startScroll + distance;
+      const duration = 500;
+      const startTime = performance.now();
+
+      function animate(now) {
+        if (cancelled) {
+          resolve();
+          return;
+        }
+
+        const elapsed = now - startTime;
+        const progress = Math.min(1, elapsed / duration);
+        const easedProgress = 1 - Math.pow(1 - progress, 3);
+        
+        wrapper.scrollLeft = startScroll + (distance * easedProgress);
+
+        if (progress < 1) {
+          activeDragRaf = requestAnimationFrame(animate);
         } else {
-          rafEntry.done = true;
-          rafEntry.id = null;
-          removeDelayEntry(rafEntry);
+          activeDragRaf = null;
           resolve();
         }
-      };
+      }
 
-      rafEntry.cancel = () => {
-        if (typeof cancelAnimationFrame === 'function' && rafEntry.id) {
-          cancelAnimationFrame(rafEntry.id);
-          rafEntry.id = null;
-        }
-      };
-
-      rafEntry.id = typeof requestAnimationFrame === 'function' ? requestAnimationFrame(rafCallback) : null;
-      pendingDelays.push(rafEntry);
+      activeDragRaf = requestAnimationFrame(animate);
     });
   }
 
   function delay(ms) {
     return new Promise((resolve) => {
-      const entry = { id: null, resolve, done: false, cancel: null };
-      entry.id = setTimeout(() => {
-        if (entry.done) return;
-        entry.done = true;
-        entry.id = null;
-        removeDelayEntry(entry);
+      if (cancelled) {
+        resolve();
+        return;
+      }
+      pendingTimeout = setTimeout(() => {
+        pendingTimeout = null;
         resolve();
       }, ms);
-      entry.cancel = () => {
-        if (entry.id !== null) {
-          clearTimeout(entry.id);
-          entry.id = null;
-        }
-      };
-      pendingDelays.push(entry);
     });
   }
 
   function runNudgeSequence(overflow) {
-    if (hasNudged || overflow <= 0) return;
+    if (hasNudged || overflow <= 0 || cancelled) return;
     hasNudged = true;
 
     const distance = Math.min(overflow, Math.max(wrapper.clientWidth * 0.55, 140));
+    const wrapperWidth = wrapper.clientWidth;
+    
+    // Try touch simulation first - simulate dragging from right to left (scrolling right)
+    // Start from center-right, drag to center-left
+    const startX = wrapperWidth * 0.7;
+    const endX = wrapperWidth * 0.7 - distance;
+    
+    const initialScroll = wrapper.scrollLeft;
 
-    smoothScrollTo(distance)
-      .then(() => delay(900))
-      .then(() => smoothScrollTo(0))
+    simulateDrag(startX, endX, 600)
+      .then(() => {
+        // Check if touch simulation worked (scroll position changed)
+        if (Math.abs(wrapper.scrollLeft - initialScroll) < 10 && !cancelled) {
+          // Touch simulation didn't work, use direct scroll
+          wrapper.scrollLeft = initialScroll; // Reset
+          return directScrollNudge(distance);
+        }
+        return Promise.resolve();
+      })
+      .then(() => delay(800))
+      .then(() => {
+        if (cancelled) return Promise.resolve();
+        // Drag back - from left to right
+        const currentScroll = wrapper.scrollLeft;
+        if (currentScroll > 10) {
+          const backStartX = wrapperWidth * 0.3;
+          const backEndX = wrapperWidth * 0.3 + Math.min(currentScroll, distance);
+          const beforeBack = wrapper.scrollLeft;
+          
+          return simulateDrag(backStartX, backEndX, 600).then(() => {
+            // If touch didn't work for the back swipe either, use direct scroll
+            if (Math.abs(wrapper.scrollLeft - beforeBack) < 10 && !cancelled) {
+              return directScrollNudge(-currentScroll);
+            }
+          });
+        }
+      })
       .catch(() => {});
   }
 
