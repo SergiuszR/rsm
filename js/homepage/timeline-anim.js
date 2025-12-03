@@ -1,11 +1,18 @@
-$(document).ready(function() {
+(function() {
     const BREAKPOINT_MOBILE = 768;
-    if (window.innerWidth < BREAKPOINT_MOBILE) {
-        return;
-    }
     
     // Wait for GSAP and ScrollTrigger
     function initTimelineAnimation() {
+        // Ensure DOM is ready before accessing elements
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initTimelineAnimation);
+            return;
+        }
+        
+        if (window.innerWidth < BREAKPOINT_MOBILE) {
+            return;
+        }
+        
         if (!window.gsap || !window.ScrollTrigger) {
             console.warn('GSAP or ScrollTrigger not loaded for timeline-anim');
             return;
@@ -121,7 +128,12 @@ $(document).ready(function() {
     });
     
     // Initial positioning
-
+    // Safari needs a refresh after ScrollTriggers are created
+    setTimeout(function() {
+        if (window.ScrollTrigger) {
+            try { ScrollTrigger.refresh(); } catch (e) {}
+        }
+    }, 100);
     
     // Handle window resize - recalculate positions without fighting mobile URL-bar resizes
     (function setupSafeResizeRefresh() {
@@ -180,4 +192,4 @@ $(document).ready(function() {
             }, 50);
         }
     })();
-});
+})();

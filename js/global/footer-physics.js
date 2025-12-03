@@ -1,29 +1,52 @@
-$(document).ready(function () {
-  // Track multiple physics instances (declare before any callbacks to avoid TDZ)
+(function() {
+  'use strict';
+  
+  // Track multiple physics instances
   let physicsInstances = new Map();
   
-  // Wait for GSAP and ScrollTrigger to be ready
-  // Wait for AnimationManager with polling fallback
-  if (!window.AnimationManager || typeof window.AnimationManager.onReady !== 'function') {
-    let attempts = 0;
-    const maxAttempts = 100; // 5s
-    const timer = setInterval(function() {
-      attempts++;
+  function initPhysicsSystem() {
+    // Ensure DOM is ready
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initPhysicsSystem);
+      return;
+    }
+    
+    // Wait for AnimationManager and GSAP
+    function waitAndInit() {
       if (window.AnimationManager && typeof window.AnimationManager.onReady === 'function') {
-        clearInterval(timer);
-        start();
-      } else if (attempts >= maxAttempts) {
-        clearInterval(timer);
-        console.error('AnimationManager not loaded for footer-physics');
+        window.AnimationManager.onReady(function() {
+          if (!window.gsap || !window.ScrollTrigger) {
+            console.warn('GSAP or ScrollTrigger not loaded for footer-physics');
+            return;
+          }
+          gsap.registerPlugin(ScrollTrigger);
+          initScrollTrigger();
+          
+          // Safari needs a refresh after ScrollTriggers are created
+          setTimeout(function() {
+            if (window.ScrollTrigger) {
+              try { ScrollTrigger.refresh(); } catch (e) {}
+            }
+          }, 100);
+        });
+      } else {
+        // Polling fallback
+        let attempts = 0;
+        const maxAttempts = 100;
+        const timer = setInterval(function() {
+          attempts++;
+          if (window.AnimationManager && typeof window.AnimationManager.onReady === 'function') {
+            clearInterval(timer);
+            waitAndInit();
+          } else if (attempts >= maxAttempts) {
+            clearInterval(timer);
+            console.error('AnimationManager not loaded for footer-physics');
+          }
+        }, 50);
       }
-    }, 50);
-  } else {
-    start();
-  }
-
-  function start() {
-    gsap.registerPlugin(ScrollTrigger);
-    initScrollTrigger();
+    }
+    
+    waitAndInit();
   }
 
   function initScrollTrigger() {
@@ -335,4 +358,7 @@ $(document).ready(function () {
       }
     });
   }
-});
+  
+  // Start initialization
+  initPhysicsSystem();
+})();

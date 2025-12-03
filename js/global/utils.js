@@ -320,7 +320,7 @@ function initTypingEffect() {
         // Get configuration from data attributes
         const speed = element.dataset.typingSpeed || 'normal';
         const showCursor = element.dataset.typingCursor !== 'false';
-        const trigger = element.dataset.typingTrigger || 'load';
+        const trigger = element.dataset.typingTrigger || 'scroll';
         
         // Speed configurations (seconds per character)
         const speedConfigs = {
