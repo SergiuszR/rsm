@@ -281,13 +281,10 @@
         // Load anim-init.js FIRST, then load everything else
         // This ensures AnimationManager is available before other scripts check for it
         window.RSM.loadScript('js/global/anim-init.js', function (error) {
-            console.log('anim-init.js callback executed, error:', error);
             if (error) {
                 console.error('Failed to load anim-init.js:', error);
                 return;
             }
-
-            console.log('Loading remaining global scripts...');
             // Now load the rest of the global scripts (these can load in parallel)
             window.RSM.loadScripts([
                 'js/global/footer.js',
@@ -304,7 +301,6 @@
                 'js/global/blog.js',
                 'js/global/casestudy-hover.js'
             ], function(error) {
-                console.log('All global scripts loaded, error:', error);
             });
         });
     }

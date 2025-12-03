@@ -67,7 +67,6 @@
                     // This ensures proper position calculations
                     setTimeout(() => {
                         if (window.ScrollTrigger) {
-                            console.log('[AnimationManager] Refreshing ScrollTrigger after callbacks');
                             try { ScrollTrigger.refresh(); } catch(e) {}
                         }
                     }, 100);

@@ -49,9 +49,9 @@
             
             
             if (mode === 'localhost') {
-                console.log('💡 To disable localhost mode: RSMDev.disableLocalhost()');
+                // console.log('💡 To disable localhost mode: RSMDev.disableLocalhost()');
             } else {
-                console.log('💡 To enable localhost mode: RSMDev.enableLocalhost()');
+                // console.log('💡 To enable localhost mode: RSMDev.enableLocalhost()');
             }
         },
 
