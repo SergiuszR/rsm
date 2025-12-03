@@ -86,9 +86,11 @@ if (isDesktop) {
         }, 50);
     }
 
-    if (document.readyState === 'complete') {
-        startLenisIfNeeded();
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', startLenisIfNeeded, { once: true });
     } else {
-        window.addEventListener('load', startLenisIfNeeded);
+        startLenisIfNeeded();
     }
+
+    window.addEventListener('load', startLenisIfNeeded);
 }
