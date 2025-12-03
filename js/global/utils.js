@@ -187,33 +187,56 @@ $(document).ready(function() {
 // Ensure GSAP/ScrollTrigger are ready before initializing
 (function waitForAnimationManagerDecor() {
     function initDecorAnimations() {
+        console.log('[Decor] initDecorAnimations called');
+        
         if (!window.gsap || !window.ScrollTrigger) {
-            console.warn('GSAP or ScrollTrigger not loaded for section decor animations');
+            console.warn('[Decor] GSAP or ScrollTrigger not loaded');
             return;
         }
+        
+        gsap.registerPlugin(ScrollTrigger);
 
-        gsap.from("[data-decor='timeline']", {
-            x: 200,
-            duration: 0.8,
-            ease: "back.out(2.4)",
-            scrollTrigger: {
-                trigger: "[data-decor='timeline']",
-                start: 'top 85%',
-                once: true
-            }
+        // Check if elements exist before creating animations
+        const timelineDecor = document.querySelector("[data-decor='timeline']");
+        const portfolioDecor = document.querySelector("[data-decor='portfolio']");
+        
+        console.log('[Decor] Elements found:', {
+            timeline: !!timelineDecor,
+            portfolio: !!portfolioDecor
         });
 
-        gsap.from("[data-decor='portfolio']", {
-            x: -200,
-            y: -100,
-            duration: 0.8,
-            ease: "back.out(2.4)",
-            scrollTrigger: {
-                trigger: "[data-decor='portfolio']",
-                start: 'bottom 30%',
-                once: true
-            }
-        });
+        if (timelineDecor) {
+            console.log('[Decor] Creating ScrollTrigger for timeline decor, element top:', timelineDecor.getBoundingClientRect().top);
+            gsap.from(timelineDecor, {
+                x: 200,
+                duration: 0.8,
+                ease: "back.out(2.4)",
+                scrollTrigger: {
+                    trigger: timelineDecor,
+                    start: 'top 85%',
+                    once: true,
+                    markers: true, // DEBUG - remove after fixing
+                    onEnter: () => console.log('[Decor] Timeline decor triggered!')
+                }
+            });
+        }
+
+        if (portfolioDecor) {
+            console.log('[Decor] Creating ScrollTrigger for portfolio decor, element top:', portfolioDecor.getBoundingClientRect().top);
+            gsap.from(portfolioDecor, {
+                x: -200,
+                y: -100,
+                duration: 0.8,
+                ease: "back.out(2.4)",
+                scrollTrigger: {
+                    trigger: portfolioDecor,
+                    start: 'bottom 30%',
+                    once: true,
+                    markers: true, // DEBUG - remove after fixing
+                    onEnter: () => console.log('[Decor] Portfolio decor triggered!')
+                }
+            });
+        }
 
         // Safety: refresh after a short delay to ensure positions are correct
         if (window.ScrollTrigger) {

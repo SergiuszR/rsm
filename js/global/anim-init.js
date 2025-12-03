@@ -63,6 +63,15 @@
                     // Clear callbacks
                     this.readyCallbacks = [];
                     
+                    // CRITICAL: Refresh ScrollTrigger after all animations are set up
+                    // This ensures proper position calculations
+                    setTimeout(() => {
+                        if (window.ScrollTrigger) {
+                            console.log('[AnimationManager] Refreshing ScrollTrigger after callbacks');
+                            try { ScrollTrigger.refresh(); } catch(e) {}
+                        }
+                    }, 100);
+                    
                     // Setup content loaded detection
                     this.setupContentLoadedDetection();
                 } else {
@@ -181,12 +190,11 @@
 
             try {
                 if (typeof ScrollTrigger.config === 'function') {
+                    // Only set ignoreMobileResize - don't modify autoRefreshEvents
+                    // Removing 'resize' from autoRefreshEvents can break initial trigger detection
                     ScrollTrigger.config({ ignoreMobileResize: true });
-                    if (IS_TOUCH_VIEWPORT) {
-                        ScrollTrigger.config({ autoRefreshEvents: 'visibilitychange,DOMContentLoaded,load' });
-                    }
                 }
-            } catch (e) {}
+            } catch (e) { console.warn('[AnimationManager] ScrollTrigger.config error:', e); }
 
             const guardState = {
                 toolbarActive: false,
@@ -199,6 +207,9 @@
                 normalizer: null
             };
 
+            // DISABLED: normalizeScroll causes scroll interruption on mobile when browser UI appears
+            // If you need smooth scroll normalization, use Lenis instead which handles this better
+            /*
             if (IS_TOUCH_VIEWPORT && typeof ScrollTrigger.normalizeScroll === 'function') {
                 try {
                     guardState.normalizer = ScrollTrigger.normalizeScroll({
@@ -212,6 +223,7 @@
                     });
                 } catch (e) {}
             }
+            */
 
             function isMobileWidth() {
                 return window.innerWidth <= MOBILE_WIDTH_MAX;

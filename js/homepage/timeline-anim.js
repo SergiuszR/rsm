@@ -3,29 +3,49 @@
     
     // Wait for GSAP and ScrollTrigger
     function initTimelineAnimation() {
+        console.log('[Timeline] initTimelineAnimation called');
+        
         // Ensure DOM is ready before accessing elements
         if (document.readyState === 'loading') {
+            console.log('[Timeline] DOM not ready, waiting...');
             document.addEventListener('DOMContentLoaded', initTimelineAnimation);
             return;
         }
         
         if (window.innerWidth < BREAKPOINT_MOBILE) {
+            console.log('[Timeline] Mobile viewport, skipping');
             return;
         }
         
         if (!window.gsap || !window.ScrollTrigger) {
-            console.warn('GSAP or ScrollTrigger not loaded for timeline-anim');
+            console.warn('[Timeline] GSAP or ScrollTrigger not loaded');
             return;
         }
         
         gsap.registerPlugin(ScrollTrigger);
+        console.log('[Timeline] GSAP ready, checking jQuery...');
+        console.log('[Timeline] $ type:', typeof $, 'jQuery type:', typeof jQuery);
+        
+        // jQuery should be globally available
+        if (typeof window.$ === 'undefined' && typeof window.jQuery === 'undefined') {
+            console.error('[Timeline] jQuery not loaded!');
+            return;
+        }
+        
+        console.log('[Timeline] jQuery available, looking for elements...');
         
         const $timelineComponent = $('.timeline_component');
         const $progressLine = $('[data-animation="timeline-progress"]');
         const $timelineRows = $('.timeline_row');
         
+        console.log('[Timeline] Elements found:', {
+            component: $timelineComponent.length,
+            progressLine: $progressLine.length,
+            rows: $timelineRows.length
+        });
+        
         if ($timelineComponent.length === 0 || $progressLine.length === 0) {
-            console.warn('Timeline elements not found');
+            console.warn('[Timeline] Required elements not found');
             return;
         }
     

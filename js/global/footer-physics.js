@@ -5,20 +5,34 @@
   let physicsInstances = new Map();
   
   function initPhysicsSystem() {
+    console.log('[Physics] initPhysicsSystem called');
+    
     // Ensure DOM is ready
     if (document.readyState === 'loading') {
+      console.log('[Physics] DOM not ready, waiting...');
       document.addEventListener('DOMContentLoaded', initPhysicsSystem);
       return;
     }
     
     // Wait for AnimationManager and GSAP
     function waitAndInit() {
+      console.log('[Physics] waitAndInit called, AnimationManager:', !!window.AnimationManager);
+      
       if (window.AnimationManager && typeof window.AnimationManager.onReady === 'function') {
         window.AnimationManager.onReady(function() {
+          console.log('[Physics] AnimationManager.onReady callback fired');
+          console.log('[Physics] gsap:', !!window.gsap, 'ScrollTrigger:', !!window.ScrollTrigger, 'Matter:', !!window.Matter);
+          
           if (!window.gsap || !window.ScrollTrigger) {
-            console.warn('GSAP or ScrollTrigger not loaded for footer-physics');
+            console.warn('[Physics] GSAP or ScrollTrigger not loaded');
             return;
           }
+          
+          if (!window.Matter) {
+            console.warn('[Physics] Matter.js not loaded');
+            return;
+          }
+          
           gsap.registerPlugin(ScrollTrigger);
           initScrollTrigger();
           
@@ -50,10 +64,13 @@
   }
 
   function initScrollTrigger() {
+    console.log('[Physics] initScrollTrigger called');
     const physicsElements = document.querySelectorAll('[data-physics]');
     
+    console.log('[Physics] Found', physicsElements.length, '[data-physics] elements');
+    
     if (physicsElements.length === 0) {
-      console.error('No [data-physics] elements found');
+      console.warn('[Physics] No [data-physics] elements found');
       return;
     }
 
@@ -78,20 +95,17 @@
         icon.style.visibility = 'hidden';
       });
       
-      // Start physics earlier for smoother experience
-      const triggerValue = 20; // Start when element is 20% visible
-      
-      
       const instanceId = `physics-${index}`;
+      
+      console.log('[Physics] Creating ScrollTrigger for element', index);
       
       ScrollTrigger.create({
         trigger: element,
-        start: "top bottom",
-        end: "bottom top",
-        onUpdate: (self) => {
-          // Check if element has reached threshold
-          const visibility = Math.round(self.progress * 100);
-          if (visibility >= triggerValue && !physicsInstances.has(instanceId)) {
+        start: "top 80%", // Trigger when top of element is 80% down the viewport
+        once: true, // Only trigger once
+        onEnter: () => {
+          console.log('[Physics] ScrollTrigger fired for element', index);
+          if (!physicsInstances.has(instanceId)) {
             const instance = initPhysics(wrapper);
             if (instance) {
               dropIcons(wrapper, instance);
