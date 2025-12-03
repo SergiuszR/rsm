@@ -9,7 +9,6 @@ $(document).ready(function() {
   // Wait for GSAP and ScrollTrigger
   function initServicesReveal() {
     if (!window.gsap || !window.ScrollTrigger) {
-      console.warn('GSAP or ScrollTrigger not loaded for services-anim reveal');
       return;
     }
     
@@ -55,7 +54,6 @@ $(document).ready(function() {
           window.AnimationManager.onReady(initServicesReveal);
         } else if (attempts >= maxAttempts) {
           clearInterval(timer);
-          console.error('AnimationManager not loaded for services-anim reveal');
         }
       }, 50);
     }
@@ -74,7 +72,6 @@ $(document).ready(function() {
   
   // Check GSAP availability
   if (!window.gsap) {
-    console.warn('GSAP not loaded for services-anim hover');
     return;
   }
   

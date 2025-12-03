@@ -14,7 +14,12 @@ if (isDesktop) {
         autoRaf: false,
     });
 
-    // Stop lenis initially
+    window.RSMLenis = lenis; // debugging helper
+
+    const scrollerElement = document.documentElement;
+    let currentScroll = window.scrollY || 0;
+    let scrollProxyConfigured = false;
+
     lenis.stop();
 
     function raf(time) {
@@ -24,16 +29,57 @@ if (isDesktop) {
 
     requestAnimationFrame(raf);
 
-    // Integrate Lenis with ScrollTrigger
-    // This ensures ScrollTrigger updates when Lenis scrolls
-    lenis.on('scroll', () => {
+    lenis.on('scroll', ({ scroll }) => {
+        currentScroll = scroll;
         if (window.ScrollTrigger) {
             ScrollTrigger.update();
         }
     });
 
-    // Start lenis after document is fully loaded
+    function setupScrollTriggerProxy() {
+        if (!window.ScrollTrigger || scrollProxyConfigured) return;
+
+        ScrollTrigger.scrollerProxy(scrollerElement, {
+            scrollTop(value) {
+                if (arguments.length) {
+                    lenis.scrollTo(value, { immediate: true });
+                } else {
+                    return currentScroll;
+                }
+            },
+            getBoundingClientRect() {
+                return {
+                    top: 0,
+                    left: 0,
+                    width: window.innerWidth,
+                    height: window.innerHeight
+                };
+            },
+            pinType: scrollerElement.style.transform ? 'transform' : 'fixed'
+        });
+
+        try {
+            ScrollTrigger.defaults({ scroller: scrollerElement });
+        } catch (e) {}
+
+        ScrollTrigger.addEventListener('refresh', () => lenis.update && lenis.update());
+        ScrollTrigger.refresh();
+        scrollProxyConfigured = true;
+    }
+
+    if (window.AnimationManager && typeof window.AnimationManager.onReady === 'function') {
+        window.AnimationManager.onReady(setupScrollTriggerProxy);
+    } else {
+        const waitForST = setInterval(() => {
+            if (window.ScrollTrigger) {
+                clearInterval(waitForST);
+                setupScrollTriggerProxy();
+            }
+        }, 50);
+    }
+
     window.addEventListener('load', function() {
         lenis.start();
+        setupScrollTriggerProxy();
     });
 }

@@ -129,7 +129,6 @@
         addSwiperClasses();
 
         if (typeof Swiper === 'undefined') {
-            console.warn('Swiper library not found.');
             return;
         }
 

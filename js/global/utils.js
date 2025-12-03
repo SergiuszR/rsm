@@ -89,7 +89,6 @@ $(document).ready(function() {
         // Find the parent wrapper for navigation controls
         const parentWrapper = container.closest('.podcasts_outer-wrapper');
         if (!parentWrapper) {
-            console.warn('No parent wrapper found for swiper container');
             return;
         }
 
@@ -157,6 +156,144 @@ $(document).ready(function() {
     setTimeout(update, 200);
 });
 
+// Shared IntersectionObserver helper used by multiple animations
+    (function initRSMVisibilityHelpers() {
+        if (typeof window === 'undefined') return;
+        window.RSMVisibility = window.RSMVisibility || {};
+        const globalHelper = window.RSMVisibility;
+
+        if (globalHelper.createFullVisibilityObserver && globalHelper.isFullyVisibleWithOffset) {
+            return;
+        }
+
+        function buildThresholds(step) {
+            const increment = step && step > 0 ? step : 0.25;
+            const thresholds = [];
+            for (let i = 0; i <= 1; i += increment) {
+                thresholds.push(Number(i.toFixed(2)));
+            }
+            if (thresholds[thresholds.length - 1] !== 1) thresholds.push(1);
+            return thresholds;
+        }
+
+        function isFullyVisibleWithOffset(rect, viewportHeight, offset) {
+            if (!rect || !viewportHeight) return false;
+            const safeOffset = Math.max(0, Number(offset) || 0);
+            const fitsViewport = rect.height + safeOffset * 2 <= viewportHeight;
+
+            if (fitsViewport) {
+                return rect.top >= safeOffset && rect.bottom <= viewportHeight - safeOffset;
+            }
+
+            // For very tall elements, require the top to clear the offset and accept bottom within viewport
+            return rect.top >= safeOffset && rect.bottom <= viewportHeight + safeOffset;
+        }
+
+        function createFullVisibilityObserver(options = {}) {
+            const {
+                offset = 40,
+                once = false,
+                onEnter,
+                onLeave,
+                thresholdStep = 0.25
+            } = options;
+
+            if (typeof IntersectionObserver === 'undefined') {
+                return {
+                    observe(element) {
+                        if (element && typeof onEnter === 'function') {
+                            onEnter(element, { fallback: true });
+                        }
+                    },
+                    unobserve() {},
+                    disconnect() {}
+                };
+            }
+
+            const state = new WeakMap();
+            const pendingChecks = new WeakMap();
+            const thresholds = buildThresholds(thresholdStep);
+            let observer;
+
+            function cancelPending(target) {
+                const rafId = pendingChecks.get(target);
+                if (rafId) {
+                    cancelAnimationFrame(rafId);
+                    pendingChecks.delete(target);
+                }
+            }
+
+            function scheduleVisibilityCheck(target, meta) {
+                if (!target || !document.body.contains(target)) return;
+
+                const checkVisibility = () => {
+                    const rect = target.getBoundingClientRect();
+                    const viewportHeight = window.innerHeight || document.documentElement?.clientHeight || 0;
+                    const fullyVisible = viewportHeight && isFullyVisibleWithOffset(rect, viewportHeight, offset);
+
+                    if (fullyVisible) {
+                        cancelPending(target);
+                        if (state.get(target) === true) return;
+                        state.set(target, true);
+                        if (typeof onEnter === 'function') {
+                            onEnter(target, { entry: meta?.entry, rect, viewportHeight });
+                        }
+                        if (once && observer) {
+                            observer.unobserve(target);
+                            state.delete(target);
+                        }
+                    } else if (document.body.contains(target)) {
+                        const rafId = requestAnimationFrame(checkVisibility);
+                        pendingChecks.set(target, rafId);
+                    }
+                };
+
+                cancelPending(target);
+                const rafId = requestAnimationFrame(checkVisibility);
+                pendingChecks.set(target, rafId);
+            }
+
+            observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    const target = entry.target;
+                    const wasVisible = state.get(target) === true;
+
+                    if (entry.isIntersecting) {
+                        if (!wasVisible && !pendingChecks.has(target)) {
+                            scheduleVisibilityCheck(target, { entry });
+                        }
+                    } else {
+                        cancelPending(target);
+                        if (wasVisible) {
+                            state.set(target, false);
+                            if (!once && typeof onLeave === 'function') {
+                                onLeave(target, { entry });
+                            }
+                        }
+                    }
+                });
+            }, { threshold: thresholds });
+
+            return {
+                observe(element) {
+                    if (element) observer.observe(element);
+                },
+                unobserve(element) {
+                    if (element) {
+                        cancelPending(element);
+                        observer.unobserve(element);
+                    }
+                },
+                disconnect() {
+                    observer.disconnect();
+                }
+            };
+        }
+
+        globalHelper.isFullyVisibleWithOffset = isFullyVisibleWithOffset;
+        globalHelper.createFullVisibilityObserver = createFullVisibilityObserver;
+    })();
+
 
 // Storage Video
 
@@ -177,7 +314,7 @@ $(document).ready(function() {
           });
         }
       })
-      .catch(err => console.error('Error:', err));
+    .catch(() => {});
   });
   
 
@@ -187,60 +324,57 @@ $(document).ready(function() {
 // Ensure GSAP/ScrollTrigger are ready before initializing
 (function waitForAnimationManagerDecor() {
     function initDecorAnimations() {
-        console.log('[Decor] initDecorAnimations called');
-        
-        if (!window.gsap || !window.ScrollTrigger) {
-            console.warn('[Decor] GSAP or ScrollTrigger not loaded');
-            return;
-        }
-        
-        gsap.registerPlugin(ScrollTrigger);
+        if (!window.gsap) return;
 
-        // Check if elements exist before creating animations
         const timelineDecor = document.querySelector("[data-decor='timeline']");
         const portfolioDecor = document.querySelector("[data-decor='portfolio']");
+        const DELAY_OFFSET_PX = 40;
+        const createVisibilityObserver = window.RSMVisibility?.createFullVisibilityObserver || null;
+        const observerRefs = [];
         
-        console.log('[Decor] Elements found:', {
-            timeline: !!timelineDecor,
-            portfolio: !!portfolioDecor
-        });
+        // Set initial states immediately
+        if (timelineDecor) gsap.set(timelineDecor, { x: 200 });
+        if (portfolioDecor) gsap.set(portfolioDecor, { x: -200, y: -100 });
 
-        if (timelineDecor) {
-            console.log('[Decor] Creating ScrollTrigger for timeline decor, element top:', timelineDecor.getBoundingClientRect().top);
-            gsap.from(timelineDecor, {
-                x: 200,
-                duration: 0.8,
-                ease: "back.out(2.4)",
-                scrollTrigger: {
-                    trigger: timelineDecor,
-                    start: 'top 85%',
-                    once: true,
-                    markers: true, // DEBUG - remove after fixing
-                    onEnter: () => console.log('[Decor] Timeline decor triggered!')
+        function attachVisibilityObserver(element, label, onReveal) {
+            if (!element) return;
+
+            if (!createVisibilityObserver) {
+                onReveal();
+                return;
+            }
+
+            const observer = createVisibilityObserver({
+                offset: DELAY_OFFSET_PX,
+                once: true,
+                onEnter: () => {
+                    onReveal();
                 }
             });
+            observerRefs.push(observer);
+            observer.observe(element);
         }
+        
+        // Wait for page to settle before creating triggers
+        function createTriggers() {
+            if (timelineDecor) {
+                attachVisibilityObserver(timelineDecor, 'Timeline', () => {
+                    gsap.to(timelineDecor, { x: 0, duration: 0.8, ease: "back.out(2.4)" });
+                });
+            }
 
-        if (portfolioDecor) {
-            console.log('[Decor] Creating ScrollTrigger for portfolio decor, element top:', portfolioDecor.getBoundingClientRect().top);
-            gsap.from(portfolioDecor, {
-                x: -200,
-                y: -100,
-                duration: 0.8,
-                ease: "back.out(2.4)",
-                scrollTrigger: {
-                    trigger: portfolioDecor,
-                    start: 'bottom 30%',
-                    once: true,
-                    markers: true, // DEBUG - remove after fixing
-                    onEnter: () => console.log('[Decor] Portfolio decor triggered!')
-                }
-            });
+            if (portfolioDecor) {
+                attachVisibilityObserver(portfolioDecor, 'Portfolio', () => {
+                    gsap.to(portfolioDecor, { x: 0, y: 0, duration: 0.8, ease: "back.out(2.4)" });
+                });
+            }
         }
-
-        // Safety: refresh after a short delay to ensure positions are correct
-        if (window.ScrollTrigger) {
-            setTimeout(function() { try { ScrollTrigger.refresh(); } catch (e) {} }, 200);
+        
+        // Wait for window load + extra time for layout to settle
+        if (document.readyState === 'complete') {
+            setTimeout(createTriggers, 500);
+        } else {
+            window.addEventListener('load', () => setTimeout(createTriggers, 500));
         }
     }
 
@@ -248,7 +382,7 @@ $(document).ready(function() {
         window.AnimationManager.onReady(initDecorAnimations);
     } else {
         let attempts = 0;
-        const maxAttempts = 100; // 5s
+        const maxAttempts = 100;
         const timer = setInterval(function() {
             attempts++;
             if (window.AnimationManager && typeof window.AnimationManager.onReady === 'function') {
@@ -256,7 +390,6 @@ $(document).ready(function() {
                 window.AnimationManager.onReady(initDecorAnimations);
             } else if (attempts >= maxAttempts) {
                 clearInterval(timer);
-                console.error('AnimationManager not loaded for section decor animations');
             }
         }, 50);
     }
@@ -335,6 +468,24 @@ $('#submit').on('click', function(e) {
 
 function initTypingEffect() {
     const typingElements = document.querySelectorAll('[data-typing-effect]');
+    let refreshQueued = false;
+
+    function scheduleScrollTriggerRefresh() {
+        if (refreshQueued) return;
+        refreshQueued = true;
+        requestAnimationFrame(() => {
+            refreshQueued = false;
+            try {
+                if (window.AnimationManager && typeof window.AnimationManager.refreshScrollTrigger === 'function') {
+                    window.AnimationManager.refreshScrollTrigger();
+                } else if (window.ScrollTrigger) {
+                    ScrollTrigger.refresh();
+                }
+            } catch (e) {
+                /* no-op */
+            }
+        });
+    }
     
     typingElements.forEach(element => {
         const originalText = element.textContent.trim();
@@ -400,6 +551,8 @@ function initTypingEffect() {
                             }
                         }, 1000);
                     }
+
+                    scheduleScrollTriggerRefresh();
                 }
             }
             

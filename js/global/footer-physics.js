@@ -3,45 +3,141 @@
   
   // Track multiple physics instances
   let physicsInstances = new Map();
+  const VISIBILITY_OFFSET = 40;
+
+  function createFullVisibilityObserver(options = {}) {
+    if (window.RSMVisibility?.createFullVisibilityObserver) {
+      return window.RSMVisibility.createFullVisibilityObserver(options);
+    }
+    return createFallbackVisibilityObserver(options);
+  }
+
+  function createFallbackVisibilityObserver(options = {}) {
+    if (typeof IntersectionObserver === 'undefined') {
+      return {
+        observe(element) {
+          if (element && typeof options.onEnter === 'function') {
+            options.onEnter(element, { fallback: true });
+          }
+        },
+        unobserve() {},
+        disconnect() {}
+      };
+    }
+
+    const {
+      offset = VISIBILITY_OFFSET,
+      once = false,
+      onEnter,
+      onLeave,
+      thresholdStep = 0.25
+    } = options;
+
+    function buildThresholds(step) {
+      const thresholds = [];
+      const increment = step && step > 0 ? step : 0.25;
+      for (let i = 0; i <= 1; i += increment) {
+        thresholds.push(Number(i.toFixed(2)));
+      }
+      if (thresholds[thresholds.length - 1] !== 1) thresholds.push(1);
+      return thresholds;
+    }
+
+    const thresholds = buildThresholds(thresholdStep);
+    const state = new WeakMap();
+    const pendingChecks = new WeakMap();
+    let observer;
+
+    function cancelPending(target) {
+      const rafId = pendingChecks.get(target);
+      if (rafId) {
+        cancelAnimationFrame(rafId);
+        pendingChecks.delete(target);
+      }
+    }
+
+    function scheduleCheck(target, meta) {
+      if (!target || !document.body.contains(target)) return;
+
+      const evaluate = () => {
+        const rect = target.getBoundingClientRect();
+        const viewportHeight = window.innerHeight || document.documentElement?.clientHeight || 0;
+        const safeOffset = Math.max(0, Number(offset) || 0);
+        const fitsViewport = rect.height + safeOffset * 2 <= viewportHeight;
+        const fullyVisible = viewportHeight ?
+          (fitsViewport ? (rect.top >= safeOffset && rect.bottom <= viewportHeight - safeOffset) : rect.top >= safeOffset)
+          : false;
+
+        if (fullyVisible) {
+          cancelPending(target);
+          if (state.get(target) === true) return;
+          state.set(target, true);
+          if (typeof onEnter === 'function') {
+            onEnter(target, { entry: meta?.entry, rect, viewportHeight });
+          }
+          if (once && observer) {
+            observer.unobserve(target);
+            state.delete(target);
+          }
+        } else if (document.body.contains(target)) {
+          const rafId = requestAnimationFrame(evaluate);
+          pendingChecks.set(target, rafId);
+        }
+      };
+
+      cancelPending(target);
+      const rafId = requestAnimationFrame(evaluate);
+      pendingChecks.set(target, rafId);
+    }
+
+    observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        const target = entry.target;
+        const wasVisible = state.get(target) === true;
+
+        if (entry.isIntersecting) {
+          if (!wasVisible && !pendingChecks.has(target)) {
+            scheduleCheck(target, { entry });
+          }
+        } else {
+          cancelPending(target);
+          if (wasVisible) {
+            state.set(target, false);
+            if (!once && typeof onLeave === 'function') {
+              onLeave(target, { entry });
+            }
+          }
+        }
+      });
+    }, { threshold: thresholds });
+
+    return {
+      observe(element) {
+        if (element) observer.observe(element);
+      },
+      unobserve(element) {
+        if (element) {
+          cancelPending(element);
+          observer.unobserve(element);
+        }
+      },
+      disconnect() {
+        observer.disconnect();
+      }
+    };
+  }
   
   function initPhysicsSystem() {
-    console.log('[Physics] initPhysicsSystem called');
-    
-    // Ensure DOM is ready
     if (document.readyState === 'loading') {
-      console.log('[Physics] DOM not ready, waiting...');
       document.addEventListener('DOMContentLoaded', initPhysicsSystem);
       return;
     }
     
-    // Wait for AnimationManager and GSAP
     function waitAndInit() {
-      console.log('[Physics] waitAndInit called, AnimationManager:', !!window.AnimationManager);
-      
       if (window.AnimationManager && typeof window.AnimationManager.onReady === 'function') {
         window.AnimationManager.onReady(function() {
-          console.log('[Physics] AnimationManager.onReady callback fired');
-          console.log('[Physics] gsap:', !!window.gsap, 'ScrollTrigger:', !!window.ScrollTrigger, 'Matter:', !!window.Matter);
-          
-          if (!window.gsap || !window.ScrollTrigger) {
-            console.warn('[Physics] GSAP or ScrollTrigger not loaded');
-            return;
-          }
-          
-          if (!window.Matter) {
-            console.warn('[Physics] Matter.js not loaded');
-            return;
-          }
-          
-          gsap.registerPlugin(ScrollTrigger);
-          initScrollTrigger();
-          
-          // Safari needs a refresh after ScrollTriggers are created
-          setTimeout(function() {
-            if (window.ScrollTrigger) {
-              try { ScrollTrigger.refresh(); } catch (e) {}
-            }
-          }, 100);
+          if (!window.gsap || !window.Matter) return;
+          initPhysicsTriggers();
         });
       } else {
         // Polling fallback
@@ -54,7 +150,7 @@
             waitAndInit();
           } else if (attempts >= maxAttempts) {
             clearInterval(timer);
-            console.error('AnimationManager not loaded for footer-physics');
+            /* AnimationManager not available for footer-physics */
           }
         }, 50);
       }
@@ -63,48 +159,44 @@
     waitAndInit();
   }
 
-  function initScrollTrigger() {
-    console.log('[Physics] initScrollTrigger called');
+  function initPhysicsTriggers() {
     const physicsElements = document.querySelectorAll('[data-physics]');
-    
-    console.log('[Physics] Found', physicsElements.length, '[data-physics] elements');
-    
-    if (physicsElements.length === 0) {
-      console.warn('[Physics] No [data-physics] elements found');
-      return;
-    }
+    if (physicsElements.length === 0) return;
 
-    physicsElements.forEach((element, index) => {
-      // Check if the [data-physics] element itself has the physics_wrapper class
-      let wrapper = null;
-      if (element.classList.contains('physics_wrapper')) {
-        wrapper = element;
-      } else {
-        wrapper = element.querySelector('.physics_wrapper');
+    const visibilityCallbacks = new WeakMap();
+    const visibilityObserver = createFullVisibilityObserver({
+      offset: VISIBILITY_OFFSET,
+      once: true,
+      onEnter: (target) => {
+        const cb = visibilityCallbacks.get(target);
+        if (typeof cb === 'function') {
+          cb();
+          visibilityCallbacks.delete(target);
+        }
       }
-      
-      if (!wrapper) {
-        console.error('Physics wrapper not found - [data-physics] element should either be .physics_wrapper or contain .physics_wrapper');
-        return;
+    });
+    
+    // Hide icons immediately
+    physicsElements.forEach((element) => {
+      let wrapper = element.classList.contains('physics_wrapper') ? element : element.querySelector('.physics_wrapper');
+      if (wrapper) {
+        const icons = wrapper.querySelectorAll('.physics_icon');
+        icons.forEach(icon => {
+          icon.style.opacity = '0';
+          icon.style.visibility = 'hidden';
+        });
       }
-      
-      // Hide all icons initially to prevent flash of unstyled content
-      const icons = wrapper.querySelectorAll('.physics_icon');
-      icons.forEach(icon => {
-        icon.style.opacity = '0';
-        icon.style.visibility = 'hidden';
-      });
-      
-      const instanceId = `physics-${index}`;
-      
-      console.log('[Physics] Creating ScrollTrigger for element', index);
-      
-      ScrollTrigger.create({
-        trigger: element,
-        start: "top 80%", // Trigger when top of element is 80% down the viewport
-        once: true, // Only trigger once
-        onEnter: () => {
-          console.log('[Physics] ScrollTrigger fired for element', index);
+    });
+    
+    // Wait for page to settle before creating triggers
+    function createTriggers() {
+      physicsElements.forEach((element, index) => {
+        let wrapper = element.classList.contains('physics_wrapper') ? element : element.querySelector('.physics_wrapper');
+        if (!wrapper) return;
+        
+        const instanceId = `physics-${index}`;
+        
+        function triggerPhysics() {
           if (!physicsInstances.has(instanceId)) {
             const instance = initPhysics(wrapper);
             if (instance) {
@@ -113,8 +205,18 @@
             }
           }
         }
+        
+        visibilityCallbacks.set(element, triggerPhysics);
+        visibilityObserver.observe(element);
       });
-    });
+    }
+    
+    // Wait for window load + extra time for layout to settle
+    if (document.readyState === 'complete') {
+      setTimeout(createTriggers, 500);
+    } else {
+      window.addEventListener('load', () => setTimeout(createTriggers, 500));
+    }
   }
 
   function initPhysics(wrapper) {
@@ -178,7 +280,6 @@
     const icons = wrapper.querySelectorAll('.physics_icon');
     
     if (!wrapper || icons.length === 0) {
-      console.error('Wrapper or icons not found');
       return;
     }
     
@@ -188,7 +289,6 @@
     icons.forEach((icon, index) => {
       // Safety check for icon element
       if (!icon || !icon.offsetWidth || !icon.offsetHeight) {
-        console.warn(`Skipping invalid icon at index ${index}`);
         return;
       }
       
@@ -236,7 +336,6 @@
         
         instance.bodies.forEach((bodyData, index) => {
           if (!bodyData || !bodyData.element || !bodyData.body) {
-            console.warn(`Invalid body data at index ${index}, skipping`);
             return; // Safety check
           }
           
@@ -244,7 +343,6 @@
           
           // Additional safety checks
           if (!element || !body || !body.position) {
-            console.warn(`Invalid element or body at index ${index}, skipping`);
             return;
           }
           
@@ -261,7 +359,7 @@
         });
         requestAnimationFrame(animate);
       } catch (error) {
-        console.error('Animation loop error:', error);
+          /* animation loop halted */
         // Stop the animation loop on error
       }
     }

@@ -4,11 +4,9 @@ $(document).ready(function() {
     
     // Prevent multiple initializations
     if (window._rsmVimeoInitialized) {
-        console.warn('[Vimeo] Script already initialized, skipping duplicate execution');
         return;
     }
     window._rsmVimeoInitialized = true;
-    console.log('[Vimeo] Initializing Vimeo video loader');
     
     // Track pending requests to prevent duplicate API calls for the same video ID
     const pendingRequests = new Map(); // videoId -> { callbacks: [], inProgress: boolean }
@@ -166,9 +164,6 @@ $(document).ready(function() {
     });
     
     // Debug: Log how many elements we found
-    if ($videoElements.length > 0) {
-        console.log(`[Vimeo] Found ${$videoElements.length} video element(s) in reels section(s)`);
-    }
     
     // Process each video
     $videoElements.each(function() {

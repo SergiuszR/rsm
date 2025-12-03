@@ -72,7 +72,6 @@ $(document).ready(function () {
   function initMarqueeAnimation() {
     try {
       if (!window.gsap) {
-        console.warn('GSAP not loaded for marquee');
         return;
       }
 
@@ -220,7 +219,6 @@ $(document).ready(function () {
       // Check if desktop
       if (window.innerWidth > 991) {
         if (!window.ScrollTrigger) {
-          console.warn('ScrollTrigger not loaded for marquee scroll effects');
           return;
         }
 
@@ -264,7 +262,7 @@ $(document).ready(function () {
         */
       }
     } catch (error) {
-      console.error('Marquee animation initialization failed:', error);
+      /* marquee animation failed */
       // Don't re-throw - allow other animations to continue
     }
   }
@@ -283,7 +281,6 @@ $(document).ready(function () {
           window.AnimationManager.onReady(initMarqueeAnimation);
         } else if (attempts >= maxAttempts) {
           clearInterval(timer);
-          console.error('AnimationManager not loaded for marquee');
         }
       }, 50);
     }

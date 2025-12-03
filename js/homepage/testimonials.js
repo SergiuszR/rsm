@@ -4,7 +4,6 @@ $(document).ready(function() {
   // Check GSAP availability before proceeding
   function initTestimonials() {
     if (typeof gsap === 'undefined') {
-      console.warn('GSAP not loaded for testimonials');
       return;
     }
   
@@ -325,7 +324,6 @@ $(document).ready(function() {
     const isWrapperContainer = containerEl === $wrapper.get(0);
 
     if (typeof Swiper === 'undefined') {
-      console.warn('Swiper library not found for testimonials.');
       return;
     }
 
@@ -407,98 +405,8 @@ $(document).ready(function() {
           window.AnimationManager.onReady(initTestimonials);
         } else if (attempts >= maxAttempts) {
           clearInterval(timer);
-          console.error('AnimationManager not loaded for testimonials');
         }
       }, 50);
     }
   })();
-/*
-  function initReelsAnimation() {
-      if (!window.gsap || !window.ScrollTrigger) {
-        console.warn('GSAP or ScrollTrigger not loaded for reels animation');
-        return;
-      }
-      
-      const isMobile = window.innerWidth <= 768;
-      const duration = isMobile ? 0.35 : 0.4;
-      
-      
-      gsap.set('[data-section="reels"] [data-left-col], [data-section="reels"] [data-center-col], [data-section="reels"] [data-right-col]', {
-        opacity: 0,
-        x: 0,
-        y: 0
-    });
-    
-    gsap.set('[data-section="reels"] [data-left-col]', { x: -50 });
-    gsap.set('[data-section="reels"] [data-right-col]', { x: 50 });
-    gsap.set('[data-section="reels"] [data-center-col]', { y: 50 });
-    
-    const tl = gsap.timeline({
-        scrollTrigger: {
-            trigger: '[data-section="reels"]',
-            start: 'top 80%',
-            once: true
-        }
-    });
-    
-    tl.to('[data-section="reels"] [data-left-col]', {
-        opacity: 1,
-        x: 0,
-        duration: duration,
-        ease: 'power2.out'
-    })
-    .to('[data-section="reels"] [data-center-col]', {
-        opacity: 1,
-        y: 0,
-        duration: duration,
-        ease: 'power2.out'
-    }, '-=0.3')
-    .to('[data-section="reels"] [data-right-col]', {
-        opacity: 1,
-        x: 0,
-        duration: duration,
-        ease: 'power2.out'
-    }, '-=0.3');
-    
-    gsap.to('[data-section="reels"] [data-left-col]', {
-        y: -80,
-        scrollTrigger: {
-            trigger: '[data-section="reels"]',
-            start: 'top 100%',
-            end: 'bottom 0%',
-            scrub: 0.5
-        }
-    });
-    
-    gsap.to('[data-section="reels"] [data-right-col]', {
-        y: 80,
-        scrollTrigger: {
-            trigger: '[data-section="reels"]',
-            start: 'top 100%',
-            end: 'bottom 0%',
-            scrub: 0.5
-        }
-    })
-    }
-    
-    // Initialize when GSAP is ready using AnimationManager with polling fallback
-    (function waitForAnimationManagerReels() {
-        if (window.AnimationManager && typeof window.AnimationManager.onReady === 'function') {
-            window.AnimationManager.onReady(initReelsAnimation);
-        } else {
-            let attempts = 0;
-            const maxAttempts = 100; // 5s
-            const timer = setInterval(function() {
-                attempts++;
-                if (window.AnimationManager && typeof window.AnimationManager.onReady === 'function') {
-                    clearInterval(timer);
-                    window.AnimationManager.onReady(initReelsAnimation);
-                } else if (attempts >= maxAttempts) {
-                    clearInterval(timer);
-                    console.error('AnimationManager not loaded for reels animation');
-                }
-            }, 50);
-        }
-    })();
-*/
 });
