@@ -73,12 +73,14 @@ function updateResults() {
     calculateReadTime();
     checkPagination();
     
-    new MutationObserver(function() {
-        updateResults();
-        checkPagination();
-    }).observe($resultsCount[0], {
-        childList: true,
-        characterData: true,
-        subtree: true
-    });
+    if ($resultsCount.length) {
+        new MutationObserver(function() {
+            updateResults();
+            checkPagination();
+        }).observe($resultsCount[0], {
+            childList: true,
+            characterData: true,
+            subtree: true
+        });
+    }
 });

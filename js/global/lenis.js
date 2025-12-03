@@ -21,6 +21,14 @@ if (isDesktop) {
     let scrollProxyConfigured = false;
 
     lenis.stop();
+    let lenisStarted = false;
+
+    function startLenisIfNeeded() {
+        if (lenisStarted) return;
+        lenisStarted = true;
+        lenis.start();
+        setupScrollTriggerProxy();
+    }
 
     function raf(time) {
         lenis.raf(time);
@@ -78,8 +86,9 @@ if (isDesktop) {
         }, 50);
     }
 
-    window.addEventListener('load', function() {
-        lenis.start();
-        setupScrollTriggerProxy();
-    });
+    if (document.readyState === 'complete') {
+        startLenisIfNeeded();
+    } else {
+        window.addEventListener('load', startLenisIfNeeded);
+    }
 }
